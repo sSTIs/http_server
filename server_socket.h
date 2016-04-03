@@ -56,6 +56,7 @@ class IOSocket_select : public Socket
 {
     char *buffer;
     char *curr_buffer;
+    int pid;
 public:
     long long body_size;
     int bytes_to_send;
@@ -65,6 +66,7 @@ public:
     IOSocket_select(const IOSocket_select &socket);
     explicit IOSocket_select(int new_sd);
     
+    int get_pid();
     char *get_buffer();
     bool receive_part(); // TRUE if received all message
     bool send_part();
@@ -111,7 +113,7 @@ class Response
     char *buffer;
     int response_type;// 200 400 403 404 501
     char *content_length;
-    int content_type;// 1 text, 2 html, 3 jpg 0 other
+    int content_type;// 1 text, 2 html, 3 jpg 4 cgi program 0 other
     time_t *last_modified;
     bool is_get;
 public:
