@@ -328,8 +328,7 @@ void MyServerSocket_select::run()
                     if (::shutdown(clients_sockets[i] -> get_sd(), 0) < 0)// stop read
                         perror("Shutdown");
                     
-                    int request_type = on_accept(clients_sockets[i]);
-                    if (request_type == 2 || request_type == 0)
+                    if (!on_accept(clients_sockets[i]))
                     {
                         //response sent, no files to send - delete connection
                         delete clients_sockets[i];
@@ -339,14 +338,10 @@ void MyServerSocket_select::run()
                         }
                         num_clients--;
                     }
-                    else if (request_type == 1)
+                    else
                     {
                         clients_to_send.insert(clients_sockets[i] -> get_sd());
                         //FD_SET(clients_sockets[i] -> get_sd(), &writeset);// crutch
-                    }
-                    else if (request_type == 3)
-                    {
-                        ;
                     }
                 }
             }

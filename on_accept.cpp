@@ -13,7 +13,7 @@ using namespace std;
 //request analisys, returns true, if it has file to send
 int MyServerSocket_select::on_accept(IOSocket_select *pSocket)
 {
-    int request_type = 0;// 1 get, 2 head, 3 cgi, 0 other
+    int request_type = 0;// 1 get, 2 head, 0 other
     int content_type = 0;
     struct stat file_info;
     int file_descriptor;
@@ -21,7 +21,7 @@ int MyServerSocket_select::on_accept(IOSocket_select *pSocket)
     char file_name[256];
     
     char *part_buffer;
-    char sep[] = " \r\n?";
+    char sep[] = " \r\n";
     
     cerr << "Request" << endl;
     cerr << pSocket -> get_buffer();
@@ -53,28 +53,21 @@ int MyServerSocket_select::on_accept(IOSocket_select *pSocket)
     if (file_descriptor >= 0)
     {
         content_type = get_content_type(part_buffer);
-        fstat(file_descriptor, &file_info);
-        if(file_info.st_mode & S_IXUSR)
-        {
-            content_type = 4;// cgi
-            request_type = 3;// cgi
-            //pSocket -> run_cgi();
-        }
         if (content_type == 0)
         {
             ::close(file_descriptor);
             file_descriptor = ::open("./forbidden.html", O_RDONLY);
-            fstat(file_descriptor, &file_info);
         }
+        fstat(file_descriptor, &file_info);
         sprintf(file_size, "%lld", file_info.st_size);
         pSocket -> body_size = file_info.st_size;
         
-        if (content_type >=1 && content_type <= 3)
+        if (content_type != 0)
         {
             Response answer(200, file_size,  content_type, request_type == 1?true:false, &(file_info.st_mtime));
             pSocket -> send_response(answer.get_buffer());
         }
-        else if (content_type == 0)
+        else
         {
             Response answer(403, file_size, 2);
             pSocket -> send_response(answer.get_buffer());
@@ -92,10 +85,15 @@ int MyServerSocket_select::on_accept(IOSocket_select *pSocket)
     }
 
     if (request_type == 1)
+    {
         pSocket -> file_descriptor = file_descriptor;
+        return file_descriptor;
+    }
     else
+    {
         ::close(file_descriptor);
-    return request_type;
+        return 0;
+    }
 }
 
 int MyServerSocket_select::get_content_type(char *filename)
@@ -110,7 +108,7 @@ int MyServerSocket_select::get_content_type(char *filename)
             return 1;
         else if (!strcmp(file_type, ".html"))
             return 2;
-        else if (!strcmp(file_type, ".jpg") || !strcmp(file_type, ".jpeg") || !strcmp(file_type, ".ico"))
+        else if (!strcmp(file_type, ".jpg") || !strcmp(file_type, ".ico"))
             return 3;
         else
             return 0;
@@ -151,16 +149,13 @@ Response::Response(int resp_type, char *cont_length, int cont_type, bool is_get1
         default:
             break;
     }
-    
     switch (resp_type) {
         case 200:
             add_Date();
             add_Server();
             if (is_get)
-            {
                 add_Content_type();
                 add_Content_length();
-            }
             add_Last_modified();
             add_end();
             break;
