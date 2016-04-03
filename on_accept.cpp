@@ -149,6 +149,7 @@ Response::Response(int resp_type, char *cont_length, int cont_type, bool is_get1
         default:
             break;
     }
+    
     switch (resp_type) {
         case 200:
             add_Date();
