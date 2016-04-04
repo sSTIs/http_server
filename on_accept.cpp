@@ -2,7 +2,7 @@
 //  on_accept.cpp
 //
 //
-//  Created by sSTIs on 05.03.16.
+//  Created by sSTIs on 12.03.16.
 //
 //
 
@@ -13,12 +13,13 @@ using namespace std;
 //request analisys, returns true, if it has file to send
 int MyServerSocket_select::on_accept(IOSocket_select *pSocket)
 {
-    int request_type = 0;// 1 get, 2 head, 0 other
-    int content_type = 0;
+    int request_type = 0;// 1 get, 2 head, 3 cgi, 0 other
+    int content_type = 0;//
     struct stat file_info;
     int file_descriptor;
     char file_size[20];
     char file_name[256];
+    char *args = new char [256];
     
     char *part_buffer;
     char sep[] = " \r\n";
@@ -36,7 +37,7 @@ int MyServerSocket_select::on_accept(IOSocket_select *pSocket)
     {
         Response answer(501);
         pSocket -> send_response(answer.get_buffer());
-        return 0;
+        return request_type;
     }
     
     part_buffer = strtok(NULL, sep);
@@ -53,6 +54,28 @@ int MyServerSocket_select::on_accept(IOSocket_select *pSocket)
     if (file_descriptor >= 0)
     {
         content_type = get_content_type(part_buffer);
+        fstat(file_descriptor, &file_info);
+        if (file_info.st_mode & S_IXUSR && !S_ISDIR(file_info.st_mode))// if file is program
+        {
+            //content_type = 2;// html
+            request_type = 3;// cgi
+            pSocket -> cgihandler = new CGIHandler();
+            
+            if (strchr(part_buffer, '?'))
+            {
+                strcpy(file_name, strtok(part_buffer, "?"));
+                strcpy(args, strtok(NULL, " \r\n"));
+            }
+            else
+            {
+                strcpy(file_name, part_buffer);
+                args = NULL;
+            }
+            
+            (pSocket -> cgihandler) -> run_cgi(file_name, args);
+            return request_type;
+        }
+
         if (content_type == 0)
         {
             ::close(file_descriptor);
@@ -85,15 +108,11 @@ int MyServerSocket_select::on_accept(IOSocket_select *pSocket)
     }
 
     if (request_type == 1)
-    {
         pSocket -> file_descriptor = file_descriptor;
-        return file_descriptor;
-    }
     else
-    {
         ::close(file_descriptor);
-        return 0;
-    }
+    delete [] args;
+    return request_type;
 }
 
 int MyServerSocket_select::get_content_type(char *filename)
@@ -250,7 +269,8 @@ void Response::add_Last_modified()
 
 void Response::add_end()
 {
-    strcat(buffer, "\r\n\0");
+    if (content_type != 0)
+        strcat(buffer, "\r\n\0");
 }
 
 Response::~Response()

@@ -20,6 +20,7 @@
 
 #include <sys/select.h>
 #include <fcntl.h>
+
 #include <algorithm>
 #include <set>
 #include <vector>
@@ -35,6 +36,18 @@ class SocketAddress
 public:
     SocketAddress(const char *hostname, short port);
     struct sockaddr_in *getAddress();
+};
+
+class IOSocket_select;
+//!--------------------------------------------------------------------------------------
+class CGIHandler
+{
+public:
+    static int num_cgi;
+    int pid;
+    int cgi_count;
+    void run_cgi(char *file_name, char *args);
+    void make_response(IOSocket_select *pSocket);
 };
 
 // Socket classes
@@ -60,6 +73,7 @@ public:
     long long body_size;
     int bytes_to_send;
     int file_descriptor;
+    CGIHandler *cgihandler;
     
     IOSocket_select();
     IOSocket_select(const IOSocket_select &socket);
@@ -99,12 +113,13 @@ class MyServerSocket_select: public ServerSocket
     int get_content_type(char *filename);// 1 text, 2 html, 3 jpg 0 other
 public:
     virtual int accept();
-    //returns descriptor of file to send or 0 (for empty body)
+    
+    //returns type of request () 1 get, 2 head, 3 cgi, 0 other
     int on_accept(IOSocket_select *pSocket);
     virtual void run();
 };
 
-// create string with response, depends on response type (200, 404, 501)
+//! create string with response, depends on response type (200, 400, 403, 404, 501)
 //!--------------------------------------------------------------------------------------
 class Response
 {

@@ -109,6 +109,7 @@ IOSocket_select::IOSocket_select()
     bytes_to_send = 0;
     file_descriptor = 0;
     body_size = 0;
+    cgihandler = NULL;
 }
 
 IOSocket_select::IOSocket_select(const IOSocket_select &socket)
@@ -120,6 +121,8 @@ IOSocket_select::IOSocket_select(const IOSocket_select &socket)
     file_descriptor = socket.file_descriptor;
     bytes_to_send = socket.bytes_to_send;
     body_size = socket.body_size;
+    cgihandler = new CGIHandler;
+    *cgihandler = *(socket.cgihandler);
 }
 
 IOSocket_select::IOSocket_select(int new_sd)
@@ -132,6 +135,7 @@ IOSocket_select::IOSocket_select(int new_sd)
     file_descriptor = 0;
     bytes_to_send = 0;
     body_size = 0;
+    cgihandler = NULL;
 }
 
 bool IOSocket_select::receive_part()
@@ -256,12 +260,13 @@ int ServerSocket::accept()
     delete pSocket;
 }*/
 
+int CGIHandler::num_cgi = 0;
 // class Server_socket on select
 //!======================================================================================
 void MyServerSocket_select::run()
 {
     int new_socket_sd;
-    fcntl(_sd, F_SETFL, O_NONBLOCK);
+    fcntl(_sd, F_SETFL, O_NONBLOCK | FD_CLOEXEC);
     
     set<int> clients; //to receive
     set<int> clients_to_send;
@@ -328,7 +333,8 @@ void MyServerSocket_select::run()
                     if (::shutdown(clients_sockets[i] -> get_sd(), 0) < 0)// stop read
                         perror("Shutdown");
                     
-                    if (!on_accept(clients_sockets[i]))
+                    int request_type = on_accept(clients_sockets[i]);
+                    if (request_type == 2 || request_type == 0)
                     {
                         //response sent, no files to send - delete connection
                         delete clients_sockets[i];
@@ -338,10 +344,14 @@ void MyServerSocket_select::run()
                         }
                         num_clients--;
                     }
-                    else
+                    else if (request_type == 1)
                     {
                         clients_to_send.insert(clients_sockets[i] -> get_sd());
                         //FD_SET(clients_sockets[i] -> get_sd(), &writeset);// crutch
+                    }
+                    else if (request_type == 3)// cgi
+                    {
+                        ;// nothing
                     }
                 }
             }
@@ -361,6 +371,30 @@ void MyServerSocket_select::run()
                 }
             }
         }
+        
+        //wait for cgi processes
+        int pid, status;
+        while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
+        {
+            for (int i = 0; i < num_clients; ++i)
+            {
+                if (clients_sockets[i] -> cgihandler -> pid == pid)
+                {
+                    int redir_fd;
+                    char redir_file_name[20];
+                    strcpy(redir_file_name, "temp_");
+                    char temp_str[20];
+                    sprintf(temp_str, "%d", clients_sockets[i] -> cgihandler -> cgi_count);
+                    strcat(redir_file_name, temp_str);
+                    redir_fd = open(redir_file_name, O_WRONLY);
+                    clients_sockets[i] -> file_descriptor = redir_fd;
+                    
+                    clients_sockets[i] -> cgihandler -> make_response(clients_sockets[i]);
+                    clients_to_send.insert(clients_sockets[i] -> get_sd());// add to send list
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -372,7 +406,7 @@ int MyServerSocket_select::accept()
         perror("Accept failed");
         exit(5);
     }
-    fcntl(new_socket_sd, F_SETFL, O_NONBLOCK);
+    fcntl(new_socket_sd, F_SETFL, O_NONBLOCK | FD_CLOEXEC);
     //IOSocket *new_socket = new IOSocket(new_socket_sd);
     return new_socket_sd;
 }

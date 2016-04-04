@@ -1,7 +1,7 @@
 all: server
 
-server: server_socket.o server.o on_accept.o
-	g++ server.o server_socket.o on_accept.o -o server
+server: server_socket.o server.o on_accept.o cgi_handler.o
+	g++ server.o server_socket.o on_accept.o cgi_handler.o -o server
 
 browser: server_socket.o browser.o on_accept.o
 	g++ browser.o server_socket.o on_accept.o -o browser
@@ -14,6 +14,9 @@ server_socket.o: server_socket.cpp
 
 on_accept.o: on_accept.cpp
 	g++ -c on_accept.cpp
+
+cgi_handler.o: cgi_handler.cpp
+	g++ -c cgi_handler.cpp
 
 browser.o: browser.cpp
 	g++ -c browser.cpp
