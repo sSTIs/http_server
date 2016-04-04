@@ -43,9 +43,7 @@ class IOSocket_select;
 class CGIHandler
 {
 public:
-    static int num_cgi;
     int pid;
-    int cgi_count;
     void run_cgi(char *file_name, char *args);
     void make_response(IOSocket_select *pSocket);
 };

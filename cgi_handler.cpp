@@ -24,14 +24,16 @@ void CGIHandler::run_cgi(char *file_name, char *args)
         char **env;
         env = new char* [16];
         for (int i = 0; i < 16; ++i)
-            *env = new char [256];
-        
+            env[i] = new char [1024];
+
         env[15] = NULL;
+
         strcpy(env[0], "CONTENT_TYPE=plain/html");
+
         strcpy(env[1], "GATEWAY_INTERFACE=CGI/1.1");
         strcpy(env[2], "REMOTE_ADDR=127.0.0.1");
         strcpy(env[3], "REMOTE_PORT=8000");
-        
+
         strcpy(env[4], "QUERY_STRING=");
         if (args != NULL)
             strcat(env[4], args);
@@ -50,26 +52,26 @@ void CGIHandler::run_cgi(char *file_name, char *args)
         strcat(env[11], env[10]);
         strcpy(env[13], "HTTP_USER_AGENT=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/601.5.17 (KHTML, like Gecko) Version/9.1 Safari/601.5.17");
         strcpy(env[14], "HTTP_REFERER=http://localhost:8000/");
-        
+
         //output redirect
         char redir_file_name[20];
         int redir_fd;
-        strcpy(redir_file_name, "temp_");
+        strcpy(redir_file_name, "temp");
         char temp_str[20];
-        sprintf(temp_str, "%d", CGIHandler::num_cgi);
+        sprintf(temp_str, "%d", getpid());
         strcat(redir_file_name, temp_str);
-        redir_fd = open(redir_file_name, O_WRONLY);
+        redir_fd = open(redir_file_name, O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (redir_fd < 0)
         {
             perror("Open temporary file error");
             exit(11);
         }
+
         dup2(redir_fd, 1);
-        ++(CGIHandler::num_cgi);
         //exec
-        cerr << "Exec";
-        execve(file_name, NULL, env);
-        
+        execve(file_name + 1, NULL, env);// +1 because first symbol '/'
+
+        cerr << "Program wasn't execute";
         close(redir_fd);
         exit(12);
     }
@@ -77,7 +79,6 @@ void CGIHandler::run_cgi(char *file_name, char *args)
     {
         //parent
         pid = pid1;
-        cgi_count = CGIHandler::num_cgi;
     }
 }
 
@@ -87,7 +88,7 @@ void CGIHandler::make_response(IOSocket_select *pSocket)
     char file_size[20];
     
     fstat(pSocket -> file_descriptor, &file_info);
-    sprintf(file_size, "%lld", file_info.st_size);
+    sprintf(file_size, "%lld", file_info.st_size - strlen("Content-type: text/html\r\n\r\n"));
     pSocket -> body_size = file_info.st_size;
     Response answer(200, file_size,  0, true, &(file_info.st_mtime));
     pSocket -> send_response(answer.get_buffer());

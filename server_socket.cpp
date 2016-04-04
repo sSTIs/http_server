@@ -164,7 +164,10 @@ bool IOSocket_select::send_part()
     {
         bytes_to_send = ::read(file_descriptor, buffer, BUFFER_SIZE);
         if (bytes_to_send < 0)
+        {
             perror("Send, read from file error");
+            exit(20);
+        }
         curr_buffer = buffer;
     }
     int len = ::send(_sd, curr_buffer, bytes_to_send, 0);
@@ -179,6 +182,7 @@ bool IOSocket_select::send_part()
     if (body_size == 0)
     {
         curr_buffer = buffer;
+        close(file_descriptor);
         return true;
     }
     return false;
@@ -207,6 +211,8 @@ IOSocket_select::~IOSocket_select()
 {
     if (file_descriptor > 0)
         ::close(file_descriptor);
+    if (cgihandler != NULL)
+        delete cgihandler;
     delete [] buffer;
 }
 
@@ -260,7 +266,6 @@ int ServerSocket::accept()
     delete pSocket;
 }*/
 
-int CGIHandler::num_cgi = 0;
 // class Server_socket on select
 //!======================================================================================
 void MyServerSocket_select::run()
@@ -292,7 +297,7 @@ void MyServerSocket_select::run()
 
         // set timeout
         timeval timeout;
-        timeout.tv_sec = 100;
+        timeout.tv_sec = 1;
         timeout.tv_usec = 0;
         
         // wait for event in sockets
@@ -361,6 +366,17 @@ void MyServerSocket_select::run()
                 if (clients_sockets[i] -> send_part())
                 {
                     //end of write
+                    if (clients_sockets[i] -> cgihandler != NULL)
+                    {
+                        //delete temporary file
+                        char buf[20];
+                        sprintf(buf, "%d", clients_sockets[i] -> cgihandler -> pid);
+                        char buf2[20];
+                        strcpy(buf2, "temp");
+                        strcat(buf2, buf);
+                        cerr << buf2;
+                        unlink(buf2);
+                    }
                     clients_to_send.erase(clients_sockets[i] -> get_sd());
                     delete clients_sockets[i];
                     for (int j = i; j < num_clients - 1; j++)
@@ -373,20 +389,25 @@ void MyServerSocket_select::run()
         }
         
         //wait for cgi processes
-        int pid, status;
-        while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
+        int pid1, status;
+        while ((pid1 = waitpid(-1, &status, WNOHANG)) > 0)
         {
             for (int i = 0; i < num_clients; ++i)
             {
-                if (clients_sockets[i] -> cgihandler -> pid == pid)
+                if (clients_sockets[i] -> cgihandler -> pid == pid1)
                 {
                     int redir_fd;
                     char redir_file_name[20];
-                    strcpy(redir_file_name, "temp_");
+                    strcpy(redir_file_name, "temp");
                     char temp_str[20];
-                    sprintf(temp_str, "%d", clients_sockets[i] -> cgihandler -> cgi_count);
+                    sprintf(temp_str, "%d", pid1);
                     strcat(redir_file_name, temp_str);
-                    redir_fd = open(redir_file_name, O_WRONLY);
+                    redir_fd = open(redir_file_name, O_RDONLY);
+                    if (redir_fd < 0)
+                    {
+                        perror("error with openig result file");
+                        exit(21);
+                    }
                     clients_sockets[i] -> file_descriptor = redir_fd;
                     
                     clients_sockets[i] -> cgihandler -> make_response(clients_sockets[i]);

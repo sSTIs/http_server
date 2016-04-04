@@ -5,9 +5,13 @@ run server: ./server
 server_socket.h - header of server_socket.cpp - Socket classes
 			 and on_accept.cpp - request processing;
 browser.cpp - not need, just for tests;
+Version 3:
+	run cgi programs with parametrs 
+	ex: get /cgi-bin/test?asd=1&qwe=2
+	makes env for these programs
 Version 2:
 	test with Yandex Browser and Safari
-	Server can open .html .txt .jpg files 
+	Server can open .html .txt .jpg (.jpeg in v3 because I forget) .ico files 
 has responses 
 	200 OK
 	403 wrong file type

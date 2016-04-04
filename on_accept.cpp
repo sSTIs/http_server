@@ -19,7 +19,7 @@ int MyServerSocket_select::on_accept(IOSocket_select *pSocket)
     int file_descriptor;
     char file_size[20];
     char file_name[256];
-    char *args = new char [256];
+    char *args;
     
     char *part_buffer;
     char sep[] = " \r\n";
@@ -39,40 +39,45 @@ int MyServerSocket_select::on_accept(IOSocket_select *pSocket)
         pSocket -> send_response(answer.get_buffer());
         return request_type;
     }
-    
     part_buffer = strtok(NULL, sep);
 
     if (!strcmp(part_buffer, "/"))
+    {
         file_descriptor = ::open("./index.html", O_RDONLY);
+        strcpy(file_name, "./index.html");
+        args = NULL;
+    }
     else
     {
         strcpy(file_name, ".");
-        strcat(file_name, part_buffer);
+        if (strchr(part_buffer, '?'))
+        {
+            strcat(file_name, strtok(part_buffer, "?"));
+            char *temp_str;
+            temp_str = strtok(NULL, " \r\n");
+            if (temp_str != NULL)
+                strcpy(args, temp_str);
+            else
+                args = NULL;
+        }
+        else
+        {
+            strcat(file_name, part_buffer);
+            args = NULL;
+        }
         file_descriptor = ::open(file_name, O_RDONLY);
     }
     
     if (file_descriptor >= 0)
     {
-        content_type = get_content_type(part_buffer);
+        content_type = get_content_type(file_name + 1);
         fstat(file_descriptor, &file_info);
         if (file_info.st_mode & S_IXUSR && !S_ISDIR(file_info.st_mode))// if file is program
         {
-            //content_type = 2;// html
             request_type = 3;// cgi
             pSocket -> cgihandler = new CGIHandler();
-            
-            if (strchr(part_buffer, '?'))
-            {
-                strcpy(file_name, strtok(part_buffer, "?"));
-                strcpy(args, strtok(NULL, " \r\n"));
-            }
-            else
-            {
-                strcpy(file_name, part_buffer);
-                args = NULL;
-            }
-            
-            (pSocket -> cgihandler) -> run_cgi(file_name, args);
+
+            pSocket -> cgihandler -> run_cgi(file_name + 1, args);// firts symbol '.'
             return request_type;
         }
 
@@ -111,7 +116,8 @@ int MyServerSocket_select::on_accept(IOSocket_select *pSocket)
         pSocket -> file_descriptor = file_descriptor;
     else
         ::close(file_descriptor);
-    delete [] args;
+    if (args != NULL)
+        delete [] args;
     return request_type;
 }
 
