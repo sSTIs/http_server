@@ -396,23 +396,40 @@ void MyServerSocket_select::run()
             {
                 if (clients_sockets[i] -> cgihandler -> pid == pid1)
                 {
-                    int redir_fd;
-                    char redir_file_name[20];
-                    strcpy(redir_file_name, "temp");
-                    char temp_str[20];
-                    sprintf(temp_str, "%d", pid1);
-                    strcat(redir_file_name, temp_str);
-                    redir_fd = open(redir_file_name, O_RDONLY);
-                    if (redir_fd < 0)
+                    if (WIFEXITED(status) && (WEXITSTATUS(status) == 0))
                     {
-                        perror("error with openig result file");
-                        exit(21);
+                        int redir_fd;
+                        char redir_file_name[20];
+                        strcpy(redir_file_name, "temp");
+                        char temp_str[20];
+                        sprintf(temp_str, "%d", pid1);
+                        strcat(redir_file_name, temp_str);
+                        redir_fd = open(redir_file_name, O_RDONLY);
+                        if (redir_fd < 0)
+                        {
+                            perror("error with openig result file");
+                            exit(21);
+                        }
+                        clients_sockets[i] -> file_descriptor = redir_fd;
+                        
+                        clients_sockets[i] -> cgihandler -> make_response(clients_sockets[i]);
+                        clients_to_send.insert(clients_sockets[i] -> get_sd());// add to send list
                     }
-                    clients_sockets[i] -> file_descriptor = redir_fd;
-                    
-                    clients_sockets[i] -> cgihandler -> make_response(clients_sockets[i]);
-                    clients_to_send.insert(clients_sockets[i] -> get_sd());// add to send list
-                    break;
+                    else
+                    {
+                        char file_size[20];
+                        struct stat file_info;
+                        int file_descriptor = ::open("./program_error.html", O_RDONLY);
+                        fstat(file_descriptor, &file_info);
+                        sprintf(file_size, "%lld", file_info.st_size);
+                        clients_sockets[i] -> body_size = file_info.st_size;
+
+                        Response answer(400, file_size, 2);
+                        clients_sockets[i] -> send_response(answer.get_buffer());
+                        clients_to_send.insert(clients_sockets[i] -> get_sd());
+                        clients_sockets[i] -> file_descriptor = file_descriptor;
+                    }
+                                        break;
                 }
             }
         }

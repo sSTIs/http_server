@@ -28,7 +28,7 @@ void CGIHandler::run_cgi(char *file_name, char *args)
 
         env[15] = NULL;
 
-        strcpy(env[0], "CONTENT_TYPE=plain/html");
+        strcpy(env[0], "CONTENT_TYPE=text/html");
 
         strcpy(env[1], "GATEWAY_INTERFACE=CGI/1.1");
         strcpy(env[2], "REMOTE_ADDR=127.0.0.1");
