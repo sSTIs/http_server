@@ -12,10 +12,22 @@ using namespace std;
 
 //! class Lex
 //!======================================================================================
-Lex::Lex(type_of_lex t, int v)
+Lex::Lex(type_of_lex t, int iv)
 {
     t_lex = t;
-    v_lex = v;
+    iv_lex = iv;
+}
+
+Lex::Lex(type_of_lex t, string sv)
+{
+    t_lex = t;
+    sv_lex = sv;
+}
+
+Lex::Lex(type_of_lex t, bool bv)
+{
+    t_lex = t;
+    bv_lex = bv;
 }
 
 type_of_lex Lex::get_type()
@@ -23,9 +35,19 @@ type_of_lex Lex::get_type()
     return t_lex;
 }
 
-int Lex::get_value()
+int Lex::get_ivalue()
 {
-    return v_lex;
+    return iv_lex;
+}
+
+string Lex::get_svalue()
+{
+    return sv_lex;
+}
+
+bool Lex::get_bvalue()
+{
+    return bv_lex;
 }
 //! class Ident
 //!======================================================================================
@@ -160,9 +182,6 @@ Table_ident TID(100);
 char * Scanner::TW[] =
 {
     "",
-    "boolean",
-    "number",
-    "string",
     "function",
     "var",
     "if",
@@ -176,14 +195,16 @@ char * Scanner::TW[] =
     "typeof",
     "write",
     "read",
+    "true",
+    "false",
     NULL
 };
 
 type_of_lex Scanner::words[] =
 {
-    LEX_NULL, LEX_BOOL, LEX_NUM, LEX_STR, LEX_FUNC, LEX_VAR, LEX_IF,
+    LEX_NULL, LEX_FUNC, LEX_VAR, LEX_IF,
     LEX_WHILE, LEX_FOR, LEX_DO, LEX_IN, LEX_BREAK, LEX_CONTINUE, LEX_RETURN,
-    LEX_TYPEOF, LEX_WRITE, LEX_READ, LEX_NULL
+    LEX_TYPEOF, LEX_WRITE, LEX_READ, LEX_BOOL, LEX_BOOL, LEX_NULL
 
 };
 
@@ -247,13 +268,19 @@ Lex Scanner::get_lex()
                     curr_state = COMPARE;
                 }
                 else if (c == EOF)
-                    return Lex(LEX_FIN);
+                    return Lex(LEX_FIN, 0);
                 else if (strchr((char *)"+-&|", c))
                 {
                     clear();
                     add();
                     gc();
                     curr_state = DOUBLE;
+                }
+                else if (c == '"')
+                {
+                    clear();
+                    gc();
+                    curr_state = STR1;
                 }
                 else
                     curr_state = DELIM;
@@ -269,7 +296,14 @@ Lex Scanner::get_lex()
                 {
                     j = look(buf, TW);
                     if (j)
+                    {
+                        if (!strcmp(buf, "true"))
+                            return Lex(words[j], true);
+                        else if (!strcmp(buf, "false"))
+                            return Lex(words[j], false);
+                            
                         return Lex(words[j], j);
+                    }
                     else
                     {
                         j = TID.put(buf);
@@ -293,10 +327,10 @@ Lex Scanner::get_lex()
                 {
                     add();
                     gc();
-                    return Lex(LEX_NEQ);
+                    return Lex(LEX_NEQ, 0);
                 }
                 else
-                    throw c;
+                    throw "!= expected\n";
                 break;
                 
             case COMPARE:
@@ -331,7 +365,7 @@ Lex Scanner::get_lex()
                     curr_state = COMM;
                 }
                 else
-                    throw c;
+                    throw string("unexpected symbol ") + c + string("\n");
                 break;
                 
             case COMM:
@@ -350,7 +384,7 @@ Lex Scanner::get_lex()
                 
             case COMM2:
                 if (c == EOF)
-                    throw c;
+                    throw "close comment\n";
                 else if (c == '*')
                 {
                     gc();
@@ -382,6 +416,39 @@ Lex Scanner::get_lex()
                 {
                     j = look(buf, TD);
                     return Lex(delims[j], j);
+                }
+                break;
+                
+            case STR1:
+                if (c == '\\')
+                {
+                    gc();
+                    curr_state = STR2;
+                }
+                else if (c == EOF)
+                {
+                    throw "close \"\n";
+                }
+                else if (c == '\"')
+                {
+                    gc();
+                    return Lex(LEX_STR, string(buf));
+                }
+                else
+                {
+                    add();
+                    gc();
+                }
+                break;
+                
+            case STR2:
+                if (c == EOF)
+                    throw string("close \"\n");
+                else
+                {
+                    add();
+                    gc();
+                    curr_state = STR1;
                 }
                 break;
         }

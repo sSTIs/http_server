@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdio>
+#include <string>
 
 using namespace std;
 
@@ -63,11 +64,18 @@ enum type_of_lex
 class Lex //lexem, that has type and value
 {
     type_of_lex t_lex;
-    int v_lex;
+    int iv_lex;
+    bool bv_lex;
+    string sv_lex;
 public:
-    Lex(type_of_lex t = LEX_NULL, int v = 0);
+    Lex(type_of_lex t = LEX_NULL, int iv = 0);
+    Lex(type_of_lex t = LEX_NULL, bool bv = false);
+    Lex(type_of_lex t = LEX_NULL, string sv = string(""));
+    
     type_of_lex get_type();
-    int get_value();
+    int get_ivalue();
+    string get_svalue();
+    bool get_bvalue();
     friend ostream& operator << (ostream& stream, Lex lexem);
 };
 
@@ -106,7 +114,8 @@ public:
 
 class Scanner //Scan file and make table of idents, lexems
 {
-    enum state {H, IDENT, NUMB, NEQ,COMPARE, DELIM, COMM, COMM2, COMM3, DOUBLE};
+    enum state {H, IDENT, NUMB, NEQ,COMPARE, DELIM, COMM, COMM2, COMM3,
+                DOUBLE, STR1, STR2};
     static char *TW[]; //table of words
     static type_of_lex words[]; //type of words from TW
     static char *TD[]; //table of delims
