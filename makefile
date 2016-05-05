@@ -1,4 +1,4 @@
-all: server
+all: server mjs
 
 server: server_socket.o server.o on_accept.o cgi_handler.o
 	g++ server.o server_socket.o on_accept.o cgi_handler.o -o server
@@ -6,11 +6,14 @@ server: server_socket.o server.o on_accept.o cgi_handler.o
 browser: server_socket.o browser.o on_accept.o
 	g++ browser.o server_socket.o on_accept.o -o browser
 
-lex: lex.o lex_test.o
-	g++ lex_test.o lex.o -o lex_test
+mjs: lex.o syntax.o mjs.o
+	g++ lex.o syntax.o mjs.o -o mjs
 
-lex_test.o: lex_test.cpp
-	g++ -c lex_test.cpp
+mjs.o: mjs.cpp
+	g++ -c mjs.cpp
+
+syntax.o: syntax.cpp syntax.h
+	g++ -c syntax.cpp
 
 lex.o: lex.cpp lex.h
 	g++ -c lex.cpp

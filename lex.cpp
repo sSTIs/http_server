@@ -16,36 +16,68 @@ Lex::Lex(type_of_lex t, int iv)
 {
     t_lex = t;
     iv_lex = iv;
+    bv_lex = false;
+    sv_lex = string("");
+    type_of_value = 1;
 }
 
 Lex::Lex(type_of_lex t, string sv)
 {
     t_lex = t;
     sv_lex = sv;
+    iv_lex = 0;
+    bv_lex = false;
+    type_of_value = 3;
 }
 
 Lex::Lex(type_of_lex t, bool bv)
 {
     t_lex = t;
     bv_lex = bv;
+    iv_lex = 0;
+    sv_lex = string("");
+    type_of_value = 2;
 }
 
-type_of_lex Lex::get_type()
+Lex::Lex(type_of_lex t)
+{
+    t_lex = t;
+    bv_lex = false;
+    iv_lex = 0;
+    sv_lex = string("");
+    type_of_value = 0;
+}
+
+Lex::Lex(const Lex& l)
+{
+    t_lex = l.get_type();
+    type_of_value = l.get_type_of_value();
+    iv_lex = l.get_ivalue();
+    bv_lex = l.get_bvalue();
+    sv_lex = l.get_svalue();
+}
+
+type_of_lex Lex::get_type() const
 {
     return t_lex;
 }
 
-int Lex::get_ivalue()
+int Lex::get_type_of_value() const
+{
+    return type_of_value;
+}
+
+int Lex::get_ivalue() const
 {
     return iv_lex;
 }
 
-string Lex::get_svalue()
+string Lex::get_svalue() const
 {
     return sv_lex;
 }
 
-bool Lex::get_bvalue()
+bool Lex::get_bvalue() const
 {
     return bv_lex;
 }
@@ -96,16 +128,6 @@ bool Ident::get_assign()
 void Ident::put_assign()
 {
     assign = true;
-}
-
-int Ident::get_value()
-{
-    return value;
-}
-
-void Ident::put_value(int v)
-{
-    value = v;
 }
 
 //! class table_ident
@@ -185,6 +207,7 @@ char * Scanner::TW[] =
     "function",
     "var",
     "if",
+    "else",
     "while",
     "for",
     "do",
@@ -195,6 +218,8 @@ char * Scanner::TW[] =
     "typeof",
     "write",
     "read",
+    "getenv",
+    "len",
     "true",
     "false",
     NULL
@@ -204,7 +229,7 @@ type_of_lex Scanner::words[] =
 {
     LEX_NULL, LEX_FUNC, LEX_VAR, LEX_IF,
     LEX_WHILE, LEX_FOR, LEX_DO, LEX_IN, LEX_BREAK, LEX_CONTINUE, LEX_RETURN,
-    LEX_TYPEOF, LEX_WRITE, LEX_READ, LEX_BOOL, LEX_BOOL, LEX_NULL
+    LEX_TYPEOF, LEX_WRITE, LEX_READ, LEX_GETENV, LEX_LEN, LEX_BOOL, LEX_BOOL, LEX_NULL
 
 };
 
@@ -268,7 +293,7 @@ Lex Scanner::get_lex()
                     curr_state = COMPARE;
                 }
                 else if (c == EOF)
-                    return Lex(LEX_FIN, 0);
+                    return Lex(LEX_FIN);
                 else if (strchr((char *)"+-&|", c))
                 {
                     clear();
@@ -302,12 +327,12 @@ Lex Scanner::get_lex()
                         else if (!strcmp(buf, "false"))
                             return Lex(words[j], false);
                             
-                        return Lex(words[j], j);
+                        return Lex(words[j]);
                     }
                     else
                     {
                         j = TID.put(buf);
-                        return Lex(LEX_ID, j);
+                        return Lex(LEX_ID);
                     }
                 }
                 break;
@@ -327,10 +352,10 @@ Lex Scanner::get_lex()
                 {
                     add();
                     gc();
-                    return Lex(LEX_NEQ, 0);
+                    return Lex(LEX_NEQ);
                 }
                 else
-                    throw "!= expected\n";
+                    return Lex(LEX_NOT);
                 break;
                 
             case COMPARE:
@@ -339,12 +364,12 @@ Lex Scanner::get_lex()
                     add();
                     gc();
                     j = look(buf, TD);
-                    return Lex(delims[j], j);
+                    return Lex(delims[j]);
                 }
                 else
                 {
                     j = look(buf, TD);
-                    return Lex(delims[j], j);
+                    return Lex(delims[j]);
                 }
                 break;
                 
@@ -355,7 +380,7 @@ Lex Scanner::get_lex()
                     add();
                     gc();
                     j = look(buf, TD);
-                    return Lex(delims[j], j);
+                    return Lex(delims[j]);
                 }
                 else if (c == '/')
                 {
@@ -378,7 +403,7 @@ Lex Scanner::get_lex()
                 else
                 {
                     j = look(buf, TD);
-                    return Lex(delims[j], j);
+                    return Lex(delims[j]);
                 }
                 break;
                 
@@ -410,12 +435,12 @@ Lex Scanner::get_lex()
                     add();
                     gc();
                     j = look(buf, TD);
-                    return Lex(delims[j], j);
+                    return Lex(delims[j]);
                 }
                 else
                 {
                     j = look(buf, TD);
-                    return Lex(delims[j], j);
+                    return Lex(delims[j]);
                 }
                 break;
                 

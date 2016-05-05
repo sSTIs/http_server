@@ -1,13 +1,13 @@
 //
-//  lex_test.cpp
+//  mjs.cpp
 //  
 //
-//  Created by sSTIs on 25.04.16.
+//  Created by sSTIs on 04.05.16.
 //
 //
 
 #include <iostream>
-#include "lex.h"
+#include "syntax.h"
 
 using namespace std;
 
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     try
     {
         Scanner scanner(argv[1]);
-        Lex a(LEX_NULL, 0);
+        Lex a(LEX_NULL);
         do
         {
             a = scanner.get_lex();

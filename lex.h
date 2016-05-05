@@ -30,53 +30,61 @@ enum type_of_lex
     LEX_DEC,  //12
     LEX_AND, //13
     LEX_OR, //14
-    LEX_EQ, //15
-    LEX_NEQ, //16
-    LEX_G, //17
-    LEX_GE,  //18
-    LEX_L, //19
-    LEX_LE, //20
-    LEX_FUNC, //21
-    LEX_VAR, //22
-    LEX_IF, //23
-    LEX_WHILE, //24
-    LEX_FOR, //25
-    LEX_DO, //26
-    LEX_IN, //27
-    LEX_BREAK, //28
-    LEX_CONTINUE, //29
-    LEX_RETURN, //30
-    LEX_TYPEOF, //31
-    LEX_DOT, //32
-    LEX_COMMA, //33
-    LEX_SEMICOLON, //34
-    LEX_LPAREN, //35
-    LEX_RPAREN, //36
-    LEX_LPAREN_SQ, //37
-    LEX_RPAREN_SQ, //38
-    LEX_WRITE, //39
-    LEX_READ, //40
-    LEX_BEGIN, //41
-    LEX_END, //42
-    LEX_FIN //43
+    LEX_NOT, //15
+    LEX_EQ, //16
+    LEX_NEQ, //17
+    LEX_G, //18
+    LEX_GE,  //19
+    LEX_L, //20
+    LEX_LE, //21
+    LEX_FUNC, //22
+    LEX_VAR, //23
+    LEX_IF, //24
+    LEX_ELSE, //25
+    LEX_WHILE, //26
+    LEX_FOR, //27
+    LEX_DO, //28
+    LEX_IN, //29
+    LEX_BREAK, //30
+    LEX_CONTINUE, //31
+    LEX_RETURN, //32
+    LEX_TYPEOF, //33
+    LEX_DOT, //34
+    LEX_COMMA, //35
+    LEX_SEMICOLON, //36
+    LEX_LPAREN, //37
+    LEX_RPAREN, //38
+    LEX_LPAREN_SQ, //39
+    LEX_RPAREN_SQ, //40
+    LEX_WRITE, //41
+    LEX_READ, //42
+    LEX_GETENV, //43
+    LEX_LEN, //44
+    LEX_BEGIN, //45
+    LEX_END, //46
+    LEX_FIN //47
 };
 
 class Lex //lexem, that has type and value
 {
     type_of_lex t_lex;
+    int type_of_value;// 0 1i 2b 3s
     int iv_lex;
     bool bv_lex;
     string sv_lex;
 public:
-    Lex(type_of_lex t = LEX_NULL, int iv = 0);
-    Lex(type_of_lex t = LEX_NULL, bool bv = false);
-    Lex(type_of_lex t = LEX_NULL, string sv = string(""));
+    Lex(type_of_lex t, int iv);
+    Lex(type_of_lex t, bool bv);
+    Lex(type_of_lex t, string sv);
+    explicit Lex(type_of_lex t);
+    Lex(const Lex& l);
     
-    type_of_lex get_type();
-    int get_ivalue();
-    string get_svalue();
-    bool get_bvalue();
-    friend ostream& operator << (ostream& stream, Lex lexem);
+    type_of_lex get_type() const;
+    int get_type_of_value() const;
+    int get_ivalue() const;
+    string get_svalue() const;
+    bool get_bvalue() const;
+    //friend ostream& operator << (ostream& stream, Lex lexem);
 };
 
 class Ident //identificator
@@ -85,8 +93,12 @@ class Ident //identificator
     bool declare;
     type_of_lex type;
     bool assign;
-    int value;
 public:
+    int ivalue;
+    bool bvalue;
+    string svalue;
+    int type_of_value;
+    
     Ident();
     char *get_name();
     void put_name(char *n);
@@ -96,8 +108,6 @@ public:
     void put_type(type_of_lex t);
     bool get_assign();
     void put_assign();
-    int get_value();
-    void put_value(int v);
 };
 
 class Table_ident //table of idents
