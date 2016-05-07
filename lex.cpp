@@ -12,6 +12,14 @@ using namespace std;
 
 //! class Lex
 //!======================================================================================
+Lex::Lex()
+{
+    t_lex = LEX_NULL;
+    iv_lex = 0;
+    bv_lex = false;
+    sv_lex = string("");
+    type_of_value = 0;
+}
 Lex::Lex(type_of_lex t, int iv)
 {
     t_lex = t;
@@ -57,6 +65,36 @@ Lex::Lex(const Lex& l)
     sv_lex = l.get_svalue();
 }
 
+Lex& Lex::operator =(const Lex& l)
+{
+    t_lex = l.get_type();
+    type_of_value = l.get_type_of_value();
+    iv_lex = l.get_ivalue();
+    bv_lex = l.get_bvalue();
+    sv_lex = l.get_svalue();
+}
+
+char *lexems_in_string[] =
+{
+    "null", "bool", "number", "string", "identificator", "+", "-", "*","/","%","=","++","--",
+    "&&","||","!","==","!=",">",">=","<","<=","function","var","if","else","while","for","do",
+    "in","break","continue","return","typeof",".",",",";","(",")","[","]","write",
+    "read","Environment", "len","{","}","final"
+};
+
+ostream& operator << (ostream& os, const Lex&l)
+{
+    cout << lexems_in_string[(int) l.t_lex]<< " ";
+    if (l.type_of_value == 1)
+        cout << l.iv_lex;
+    else if (l.type_of_value == 2)
+        cout << l.bv_lex;
+    else if (l.type_of_value == 3)
+        cout << l.sv_lex;
+    cerr << endl;
+    return os;
+}
+
 type_of_lex Lex::get_type() const
 {
     return t_lex;
@@ -87,6 +125,7 @@ Ident::Ident()
 {
     declare = false;
     assign = false;
+    type = LEX_NULL;
 }
 
 char *Ident::get_name()
@@ -110,16 +149,6 @@ void Ident::put_declare()
     declare = true;
 }
 
-type_of_lex Ident::get_type()
-{
-    return type;
-}
-
-void Ident::put_type(type_of_lex t)
-{
-    type = t;
-}
-
 bool Ident::get_assign()
 {
     return assign;
@@ -128,6 +157,15 @@ bool Ident::get_assign()
 void Ident::put_assign()
 {
     assign = true;
+}
+
+type_of_lex Ident::get_type()
+{
+    return type;
+}
+void Ident::put_type(type_of_lex t)
+{
+    type = t;
 }
 
 //! class table_ident
@@ -193,13 +231,18 @@ Scanner::Scanner(const char *program)
 {
     program_file = fopen(program, "r");
     if (program_file == NULL)
+    {
+        cerr << "File didn't open" << endl;
         exit(2);
-    curr_state = H;
+    }
+    curr_state = OUT;
+    while (c != '\n')
+        gc();
     clear();
     gc();
 }
 
-Table_ident TID(100);
+Table_ident TID(1000);
 
 char * Scanner::TW[] =
 {
@@ -218,7 +261,7 @@ char * Scanner::TW[] =
     "typeof",
     "write",
     "read",
-    "getenv",
+    "Environment",
     "len",
     "true",
     "false",
@@ -227,7 +270,7 @@ char * Scanner::TW[] =
 
 type_of_lex Scanner::words[] =
 {
-    LEX_NULL, LEX_FUNC, LEX_VAR, LEX_IF,
+    LEX_NULL, LEX_FUNC, LEX_VAR, LEX_IF, LEX_ELSE,
     LEX_WHILE, LEX_FOR, LEX_DO, LEX_IN, LEX_BREAK, LEX_CONTINUE, LEX_RETURN,
     LEX_TYPEOF, LEX_WRITE, LEX_READ, LEX_GETENV, LEX_LEN, LEX_BOOL, LEX_BOOL, LEX_NULL
 
@@ -257,11 +300,66 @@ type_of_lex Scanner::delims[] =
 Lex Scanner::get_lex()
 {
     int digit, j;
-    curr_state = H;
+    if (curr_state != OUT)
+        curr_state = H;
+    int in_script_tag = 0;// 1 if in <SCRIPT ...> 2 if in </SCRIPT>
     do
     {
         switch (curr_state)
         {
+            case OUT: //special case to detect script
+                if (c == EOF)
+                {
+                    return Lex(LEX_FIN);
+                }
+                else if (c == '<' && in_script_tag == 0)
+                {
+                    clear();
+                    add();
+                    gc();
+                    in_script_tag = 1;
+                }
+                else if (c == '>' && in_script_tag != 0)
+                {
+                    add();
+                    gc();
+                    if (in_script_tag == 1)
+                    {
+                        if (!strcmp(buf, "<SCRIPT LANGUAGE=\"mjs\" RUNAT=\"server\">"))
+                        {
+                            clear();
+                            curr_state = H;
+                        }
+                        else
+                        {
+                            cout << buf;
+                        }
+                    }
+                    else if (in_script_tag == 2)
+                    {
+                        if (!strcmp(buf, "</SCRIPT>"))
+                        {
+                            in_script_tag = 0;
+                            clear();
+                        }
+                        else
+                        {
+                            cerr << "Lex error </";
+                        }
+                    }
+                    in_script_tag = 0;
+                }
+                else if (in_script_tag != 0)
+                {
+                    add();
+                    gc();
+                }
+                else if (in_script_tag == 0)
+                {
+                    cout << c;
+                    gc();
+                }
+                break;
             case H:
                 if (c == ' ' || c == '\n' || c == '\r' || c == '\t')
                     gc();
@@ -285,12 +383,19 @@ Lex Scanner::get_lex()
                     gc();
                     curr_state = NEQ;
                 }
-                else if (c == '=' || c == '>' || c == '<')
+                else if (c == '=' || c == '>')
                 {
                     clear();
                     add();
                     gc();
                     curr_state = COMPARE;
+                }
+                else if (c == '<')
+                {
+                    clear();
+                    add();
+                    gc();
+                    curr_state = LESS;
                 }
                 else if (c == EOF)
                     return Lex(LEX_FIN);
@@ -332,7 +437,7 @@ Lex Scanner::get_lex()
                     else
                     {
                         j = TID.put(buf);
-                        return Lex(LEX_ID);
+                        return Lex(LEX_ID, j);
                     }
                 }
                 break;
@@ -373,6 +478,20 @@ Lex Scanner::get_lex()
                 }
                 break;
                 
+            case LESS:
+                if (c == '/')
+                {
+                    add();
+                    gc();
+                    curr_state = OUT;
+                    in_script_tag = 2;
+                }
+                else
+                {
+                    curr_state = COMPARE;
+                }
+                break;
+                
             case DELIM:
                 if (strchr((char *)"*%.,;[]{}()", c))
                 {
@@ -409,7 +528,7 @@ Lex Scanner::get_lex()
                 
             case COMM2:
                 if (c == EOF)
-                    throw "close comment\n";
+                    throw string("close comment\n");
                 else if (c == '*')
                 {
                     gc();
@@ -452,7 +571,7 @@ Lex Scanner::get_lex()
                 }
                 else if (c == EOF)
                 {
-                    throw "close \"\n";
+                    throw string("close \"\n");
                 }
                 else if (c == '\"')
                 {
@@ -471,6 +590,23 @@ Lex Scanner::get_lex()
                     throw string("close \"\n");
                 else
                 {
+                    if (c == 'n')
+                        c = '\n';
+                    else if (c == 't')
+                        c = '\t';
+                    else if (c == 'r')
+                        c = '\r';
+                    else if (c == '0')
+                        c = '\0';
+                    else if (c == 'a')
+                        c = '\a';
+                    else if (c == 'b')
+                        c = '\b';
+                    else if (c == 'f')
+                        c = '\f';
+                    else if (c == 'v')
+                        c = '\v';
+                       
                     add();
                     gc();
                     curr_state = STR1;

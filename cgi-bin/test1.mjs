@@ -1,3 +1,7 @@
+#! /Users/user/Documents/CMC/prac4/server/server/mjs
+<html><body>
+text before script</br>
+<SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
 	var x = 2;
 	var y = true;
@@ -12,3 +16,6 @@
 	else
 		x = 3;
 }
+</SCRIPT>
+text after script</br>
+</body></html>

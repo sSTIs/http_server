@@ -17,27 +17,40 @@ int main(int argc, char **argv)
 {
     if (argc != 2)
         exit(1);
+    
+    //cout << "Content-type: text/html\r\n\r\n"; //temporary for tests
     try
     {
-        Scanner scanner(argv[1]);
-        Lex a(LEX_NULL);
+        Parser parser(argv[1]);
+        parser.analyze();
+    }
+    catch (string& s)
+    {
+        cerr << "Lex error: "<< s <<endl;
+    }
+    catch (Lex& l)
+    {
+        cerr << "Syntax error: " << l << endl;
+    }
+    catch (...)
+    {
+        cerr << "All very bad" << endl;
+    }
+    cout << "end of analyze"<< endl;
+    //Lex analyze
+    /*Scanner scanner(argv[1]);
+    Lex a;
+    try
+    {
         do
         {
             a = scanner.get_lex();
-            cout << a.get_type() << " ";
-            if (a.get_type() == LEX_NUM)
-                cout << a.get_ivalue();
-            else if ( a.get_type() == LEX_STR)
-                cout << a.get_svalue();
-            else if (a.get_type() == LEX_BOOL)
-                cout << a.get_bvalue();
-            cout << endl;
+            cout << a;
         }while (a.get_type() != LEX_FIN);
     }
-    catch (string s)
+    catch (string& s)
     {
-        cout << s;
-    }
-    
+        cerr << s;
+    }*/
     return 0;
 }

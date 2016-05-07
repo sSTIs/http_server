@@ -76,38 +76,41 @@ public:
     Lex(type_of_lex t, int iv);
     Lex(type_of_lex t, bool bv);
     Lex(type_of_lex t, string sv);
+    Lex();
     explicit Lex(type_of_lex t);
     Lex(const Lex& l);
+    Lex& operator =(const Lex& l);
+    friend ostream& operator << (ostream& os, const Lex& l);
     
     type_of_lex get_type() const;
     int get_type_of_value() const;
     int get_ivalue() const;
     string get_svalue() const;
     bool get_bvalue() const;
-    //friend ostream& operator << (ostream& stream, Lex lexem);
 };
 
 class Ident //identificator
 {
     char *name;
     bool declare;
-    type_of_lex type;
     bool assign;
+    //LEX_NUM,LEX_BOOL,LEX_STR or LEX_NULL if not assigned or not declared
+    type_of_lex type;
+
 public:
     int ivalue;
     bool bvalue;
     string svalue;
-    int type_of_value;
     
     Ident();
     char *get_name();
     void put_name(char *n);
     bool get_declare();
     void put_declare();
-    type_of_lex get_type();
-    void put_type(type_of_lex t);
     bool get_assign();
     void put_assign();
+    type_of_lex get_type();
+    void put_type(type_of_lex t);
 };
 
 class Table_ident //table of idents
@@ -124,7 +127,7 @@ public:
 
 class Scanner //Scan file and make table of idents, lexems
 {
-    enum state {H, IDENT, NUMB, NEQ,COMPARE, DELIM, COMM, COMM2, COMM3,
+    enum state {OUT, H, IDENT, NUMB, NEQ, COMPARE, LESS, DELIM, COMM, COMM2, COMM3,
                 DOUBLE, STR1, STR2};
     static char *TW[]; //table of words
     static type_of_lex words[]; //type of words from TW
@@ -133,7 +136,7 @@ class Scanner //Scan file and make table of idents, lexems
     state curr_state;
     FILE *program_file;
     char c;
-    char buf[80];
+    char buf[1000];
     int buf_top;
     
     void clear();
