@@ -6,13 +6,16 @@ server: server_socket.o server.o on_accept.o cgi_handler.o
 browser: server_socket.o browser.o on_accept.o
 	g++ browser.o server_socket.o on_accept.o -o browser
 
-mjs: lex.o syntax.o mjs.o
-	g++ lex.o syntax.o mjs.o -o mjs
+mjs: lex.o syntax.o executer.o mjs.o
+	g++ lex.o syntax.o executer.o mjs.o -o mjs
 
 mjs.o: mjs.cpp
 	g++ -c mjs.cpp
 
-syntax.o: syntax.cpp syntax.h
+executer.o: executer.cpp interpretator.h
+	g++ -c executer.cpp
+
+syntax.o: syntax.cpp interpretator.h
 	g++ -c syntax.cpp
 
 lex.o: lex.cpp lex.h

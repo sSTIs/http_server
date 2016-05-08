@@ -76,10 +76,11 @@ Lex& Lex::operator =(const Lex& l)
 
 char *lexems_in_string[] =
 {
-    "null", "bool", "number", "string", "identificator", "+", "-", "*","/","%","=","++","--",
+    "null", "undefined", "bool", "number", "string", "identificator", "+", "-", "*","/","%","=","++","--",
     "&&","||","!","==","!=",">",">=","<","<=","function","var","if","else","while","for","do",
     "in","break","continue","return","typeof",".",",",";","(",")","[","]","write",
-    "read","Environment", "len","{","}","final"
+    "read","Environment", "length","{","}","final", "Poliz go", "Poliz false go",
+    "Poliz address", "Poliz label"
 };
 
 ostream& operator << (ostream& os, const Lex&l)
@@ -91,7 +92,7 @@ ostream& operator << (ostream& os, const Lex&l)
         cout << l.bv_lex;
     else if (l.type_of_value == 3)
         cout << l.sv_lex;
-    cerr << endl;
+    cout << endl;
     return os;
 }
 
@@ -124,8 +125,7 @@ bool Lex::get_bvalue() const
 Ident::Ident()
 {
     declare = false;
-    assign = false;
-    type = LEX_NULL;
+    type_of_value = 0;
 }
 
 char *Ident::get_name()
@@ -147,25 +147,6 @@ bool Ident::get_declare()
 void Ident::put_declare()
 {
     declare = true;
-}
-
-bool Ident::get_assign()
-{
-    return assign;
-}
-
-void Ident::put_assign()
-{
-    assign = true;
-}
-
-type_of_lex Ident::get_type()
-{
-    return type;
-}
-void Ident::put_type(type_of_lex t)
-{
-    type = t;
 }
 
 //! class table_ident
@@ -262,7 +243,7 @@ char * Scanner::TW[] =
     "write",
     "read",
     "Environment",
-    "len",
+    "length",
     "true",
     "false",
     NULL
@@ -272,7 +253,7 @@ type_of_lex Scanner::words[] =
 {
     LEX_NULL, LEX_FUNC, LEX_VAR, LEX_IF, LEX_ELSE,
     LEX_WHILE, LEX_FOR, LEX_DO, LEX_IN, LEX_BREAK, LEX_CONTINUE, LEX_RETURN,
-    LEX_TYPEOF, LEX_WRITE, LEX_READ, LEX_GETENV, LEX_LEN, LEX_BOOL, LEX_BOOL, LEX_NULL
+    LEX_TYPEOF, LEX_WRITE, LEX_READ, LEX_ENV, LEX_LEN, LEX_BOOL, LEX_BOOL, LEX_NULL
 
 };
 
@@ -509,7 +490,7 @@ Lex Scanner::get_lex()
                     curr_state = COMM;
                 }
                 else
-                    throw string("unexpected symbol ") + c + string("\n");
+                    throw string("Lex error: unexpected symbol ") + c + string("\n");
                 break;
                 
             case COMM:
@@ -528,7 +509,7 @@ Lex Scanner::get_lex()
                 
             case COMM2:
                 if (c == EOF)
-                    throw string("close comment\n");
+                    throw string("Lex error: close comment\n");
                 else if (c == '*')
                 {
                     gc();
@@ -571,7 +552,7 @@ Lex Scanner::get_lex()
                 }
                 else if (c == EOF)
                 {
-                    throw string("close \"\n");
+                    throw string("Lex error: close \"\n");
                 }
                 else if (c == '\"')
                 {
@@ -587,7 +568,7 @@ Lex Scanner::get_lex()
                 
             case STR2:
                 if (c == EOF)
-                    throw string("close \"\n");
+                    throw string("Lex error: close \"\n");
                 else
                 {
                     if (c == 'n')

@@ -8,13 +8,20 @@ text before script</br>
 	var z = false;
 	var qwe = "str";
 	var asd = "as\\\"a";
-	if (x == 3)
+	if (false)
 	{
 		var qwedaaas = 123;
-		x = x + x;
+		x = x;
 	}
 	else
 		x = 3;
+	if (true)
+		write(" This is true\n");
+	else
+		write(" This is false\n");
+	write(x, y,z, " ",qwe);
+	/*write(Environment["QUERY_STRING"]);*/
+	write("\n");
 }
 </SCRIPT>
 text after script</br>

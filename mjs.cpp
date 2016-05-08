@@ -7,7 +7,7 @@
 //
 
 #include <iostream>
-#include "syntax.h"
+#include "interpretator.h"
 
 using namespace std;
 
@@ -18,15 +18,18 @@ int main(int argc, char **argv)
     if (argc != 2)
         exit(1);
     
-    //cout << "Content-type: text/html\r\n\r\n"; //temporary for tests
+    cout << "Content-type: text/html\r\n\r\n"; //temporary for tests
     try
     {
-        Parser parser(argv[1]);
-        parser.analyze();
+        //syntax analyze
+        /*Parser parser(argv[1]);
+        parser.analyze();*/
+        Interpretator interpr(argv[1]);
+        interpr.interpretation();
     }
     catch (string& s)
     {
-        cerr << "Lex error: "<< s <<endl;
+        cerr << s <<endl;
     }
     catch (Lex& l)
     {
@@ -36,7 +39,7 @@ int main(int argc, char **argv)
     {
         cerr << "All very bad" << endl;
     }
-    cout << "end of analyze"<< endl;
+    cout << "end of all program"<< endl;
     //Lex analyze
     /*Scanner scanner(argv[1]);
     Lex a;
