@@ -135,6 +135,7 @@ int toInt(Lex lexem)
         return (lexem.get_bvalue() != false);
         break;
     case 3:
+        return 0;
         //return (strtol((lexem.get_svalue()).c_str()),NULL,10);//no
         break;
     case 4:
@@ -158,6 +159,7 @@ string toString(Lex lexem)
         case 1:
             //itoa(lexem.get_ivalue(), temp_str, 10);
             //return string(temp_str);
+            return string("");
             break;
         case 2:
             if (lexem.get_bvalue())
@@ -200,24 +202,6 @@ void Executer::execute(Poliz& poliz)
             case POLIZ_ADDRESS:
                 args.push(curr_lex);
                 break;
-            /*case LEX_ID:
-                index_in_TID = curr_lex.get_ivalue();
-                switch (TID[index_in_TID].type_of_value)
-                {
-                case 0:
-                    args.push(Lex(LEX_UNDEF));
-                    break;
-                case 1:
-                    args.push(Lex(LEX_NUM, TID[index_in_TID].ivalue));
-                    break;
-                case 2:
-                    args.push(Lex(LEX_BOOL, TID[index_in_TID].bvalue));
-                    break;
-                case 3:
-                    args.push(Lex(LEX_STR, TID[index_in_TID].svalue));
-                    break;
-                }
-                break;*/
             case POLIZ_GO:
                 index = (args.pop()).get_ivalue() - 1;
                 break;

@@ -142,6 +142,57 @@ void Parser::Command()
         }
         else throw curr_lex;
     }
+    else if (curr_lex_type == LEX_FOR)
+    {
+        int e2_label, e3_label, check_label, to_command_label, command_label;
+        get_lex();
+        if (curr_lex_type != LEX_LPAREN)
+            throw curr_lex;
+        get_lex();
+        if (curr_lex_type != LEX_SEMICOLON)
+        {
+            Expression();
+        }
+        if (curr_lex_type != LEX_SEMICOLON)
+            throw curr_lex;
+        program_poliz.put_lex(Lex(LEX_SEMICOLON));
+        get_lex();
+        e2_label = program_poliz.get_free();
+        if (curr_lex_type != LEX_SEMICOLON)
+        {
+            Expression();
+        }
+        else
+            program_poliz.put_lex(Lex(LEX_BOOL, true));
+        if (curr_lex_type != LEX_SEMICOLON)
+            throw curr_lex;
+        check_label = program_poliz.get_free();
+        program_poliz.put_free_space();
+        program_poliz.put_lex(Lex(POLIZ_FGO));
+        to_command_label = program_poliz.get_free();
+        program_poliz.put_free_space();
+        program_poliz.put_lex(Lex(POLIZ_GO));
+        get_lex();
+        
+        e3_label = program_poliz.get_free();
+        if (curr_lex_type != LEX_RPAREN)
+        {
+            Expression();
+        }
+        program_poliz.put_lex(Lex(LEX_SEMICOLON));
+        if (curr_lex_type != LEX_RPAREN)
+            throw curr_lex;
+        program_poliz.put_lex(Lex(POLIZ_LABEL, e2_label));
+        program_poliz.put_lex(Lex(POLIZ_GO));
+        get_lex();
+        
+        command_label = program_poliz.get_free();
+        Command();
+        program_poliz.put_lex(Lex(POLIZ_LABEL, e3_label));
+        program_poliz.put_lex(Lex(POLIZ_GO));
+        program_poliz.put_lex(Lex(POLIZ_LABEL, program_poliz.get_free()), check_label);
+        program_poliz.put_lex(Lex(POLIZ_LABEL, command_label), to_command_label);
+    }
     else if (curr_lex_type == LEX_WHILE)
     {
         get_lex();
@@ -227,30 +278,10 @@ void Parser::Command()
         }
         else throw curr_lex;
     }
-    /*else if (curr_lex_type == LEX_ID &&
-             TID[curr_lex.get_ivalue()].type_of_value != 5)
-    {
-        int num_in_TID = curr_lex.get_ivalue();
-        check_declare(num_in_TID);
-        program_poliz.put_lex(Lex(POLIZ_ADDRESS, num_in_TID));
-        get_lex();
-        if (curr_lex_type == LEX_ASSIGN)
-        {
-            get_lex();
-            Expression();
-            //TID[num_in_TID].put_type(stack_type.pop());
-            if (curr_lex_type == LEX_SEMICOLON)
-            {
-                get_lex();
-                program_poliz.put_lex(Lex(LEX_ASSIGN));
-                program_poliz.put_lex(Lex(LEX_SEMICOLON));
-            }
-            else throw curr_lex;
-        }
-        else throw curr_lex;
-    }*/
     else if (curr_lex_type == LEX_STR || curr_lex_type == LEX_ID ||
-             curr_lex_type == LEX_NUM || curr_lex_type == LEX_BOOL)
+             curr_lex_type == LEX_NUM || curr_lex_type == LEX_BOOL ||
+             curr_lex_type == LEX_INC || curr_lex_type == LEX_DEC ||
+             curr_lex_type == LEX_NOT)
     {
         Expression();
         //stack_type.pop();
@@ -522,7 +553,7 @@ void Parser::Factor()
             if (TID[curr_lex.get_ivalue()].type_of_value != 5)
             {
                 program_poliz.put_lex(Lex(POLIZ_ADDRESS, curr_lex.get_ivalue()));
-                program_poliz.put_lex(curr_lex);
+                program_poliz.put_lex(Lex(POLIZ_ADDRESS, curr_lex.get_ivalue()));
                 program_poliz.put_lex(Lex(LEX_NUM,1));
                 if (op == LEX_INC)
                     program_poliz.put_lex(Lex(LEX_ADD));

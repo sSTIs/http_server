@@ -2,7 +2,11 @@
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
 	var x = 3;
-	x;
+	var sum = 0;
+	for (x = 1;x < 5; x++)
+		sum = sum + x;
+	write(sum);
+	/*x;
 	3;
 	write(x, " ", 3, " ", 3 == x, "\n");
 	if (x <=3)
@@ -15,6 +19,6 @@
 	else
 		write("d");
 	if (x >=3)
-		write("e");
+		write("e");*/
 }
 </SCRIPT>

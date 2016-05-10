@@ -22,7 +22,7 @@
 		var x = 2;
 		var y = 0;
 	}
-	write(x);
-	write(" qwe\n");*/
+	write(x);*/
+	write(" qwe\n");
 }
 </SCRIPT>
