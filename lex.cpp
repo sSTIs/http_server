@@ -10,6 +10,28 @@
 
 using namespace std;
 
+//! class Stack
+//!======================================================================================
+template <class T, int max_size >
+void Stack <T, max_size >::push(T i) {
+    if ( !is_full() )
+    {
+        buf[top] = i;
+        ++top;
+    }
+    else throw string("Stack_is_full");
+}
+
+template <class T, int max_size >
+T Stack <T, max_size >::pop() {
+    if ( !is_empty() )
+    {
+        --top;
+        return buf[top];
+    }
+    else throw string("Stack_is_empty");
+}
+
 //! class Lex
 //!======================================================================================
 Lex::Lex()
@@ -19,6 +41,7 @@ Lex::Lex()
     bv_lex = false;
     sv_lex = string("");
     type_of_value = 0;
+    number_NaN = false;
 }
 Lex::Lex(type_of_lex t, int iv)
 {
@@ -27,6 +50,7 @@ Lex::Lex(type_of_lex t, int iv)
     bv_lex = false;
     sv_lex = string("");
     type_of_value = 1;
+    number_NaN = false;
 }
 
 Lex::Lex(type_of_lex t, string sv)
@@ -36,6 +60,7 @@ Lex::Lex(type_of_lex t, string sv)
     iv_lex = 0;
     bv_lex = false;
     type_of_value = 3;
+    number_NaN = false;
 }
 
 Lex::Lex(type_of_lex t, bool bv)
@@ -45,6 +70,7 @@ Lex::Lex(type_of_lex t, bool bv)
     iv_lex = 0;
     sv_lex = string("");
     type_of_value = 2;
+    number_NaN = false;
 }
 
 Lex::Lex(type_of_lex t)
@@ -54,6 +80,7 @@ Lex::Lex(type_of_lex t)
     iv_lex = 0;
     sv_lex = string("");
     type_of_value = 0;
+    number_NaN = false;
 }
 
 Lex::Lex(const Lex& l)
@@ -63,15 +90,22 @@ Lex::Lex(const Lex& l)
     iv_lex = l.get_ivalue();
     bv_lex = l.get_bvalue();
     sv_lex = l.get_svalue();
+    number_NaN = l.number_NaN;
 }
 
 Lex& Lex::operator =(const Lex& l)
 {
-    t_lex = l.get_type();
-    type_of_value = l.get_type_of_value();
-    iv_lex = l.get_ivalue();
-    bv_lex = l.get_bvalue();
-    sv_lex = l.get_svalue();
+    if (this != &l)
+    {
+        t_lex = l.get_type();
+        type_of_value = l.get_type_of_value();
+        iv_lex = l.get_ivalue();
+        bv_lex = l.get_bvalue();
+        sv_lex = l.get_svalue();
+        number_NaN = l.number_NaN;
+        return *this;
+    }
+    else return *this;
 }
 
 char *lexems_in_string[] =
@@ -120,11 +154,12 @@ bool Lex::get_bvalue() const
 {
     return bv_lex;
 }
+
 //! class Ident
 //!======================================================================================
 Ident::Ident()
 {
-    declare = false;
+    declare = -1;
     type_of_value = 0;
 }
 
@@ -139,14 +174,9 @@ void Ident::put_name(char *n)
     strcpy(name, n);
 }
 
-bool Ident::get_declare()
+Ident::~Ident()
 {
-    return declare;
-}
-
-void Ident::put_declare()
-{
-    declare = true;
+    delete []name;
 }
 
 //! class table_ident
@@ -175,6 +205,11 @@ int Table_ident::put(char *buf)
     idents[top].put_name(buf);
     ++top;
     return top-1;
+}
+
+int Table_ident::get_top() const
+{
+    return top;
 }
 
 //! class Scanner

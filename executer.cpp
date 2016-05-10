@@ -10,7 +10,6 @@
 #include <stdlib.h>
 
 using namespace std;
-
 //! class Stack
 //!======================================================================================
 template <class T, int max_size >
@@ -47,19 +46,63 @@ Lex& Poliz::operator[] (int index)
     }
 }
 
-void Poliz::print()
+void Poliz::print() // works if free on main
 {
     for (int i = 0; i < free; ++i)
         cout << i << " " << buf[i];
+    cout <<endl<< "functions" <<endl;
+    change_free();
+    for (int i = size / 2; i < free; ++i)
+        cout << i << " " << buf[i];
+    change_free();
+}
+
+void Poliz::change_free()
+{
+    int temp = free;
+    free = second_free;
+    second_free = temp;
+}
+
+Poliz::Poliz(int max_size)
+{
+    buf = new Lex [size = max_size];
+    free = 0;
+    second_free = max_size / 2;
 }
 
 extern Table_ident TID;
 
 //! types conversion
 //!======================================================================================
+void from_adreess_to_value(Lex& lexem)
+{
+    if (lexem.get_type() == POLIZ_ADDRESS)
+    {
+        int index_in_TID = lexem.get_ivalue();
+        switch (TID[index_in_TID].type_of_value)
+        {
+            case 0:
+                lexem = Lex(LEX_UNDEF);
+                break;
+            case 1:
+                lexem = Lex(LEX_NUM, TID[index_in_TID].ivalue);
+                break;
+            case 2:
+                lexem = Lex(LEX_BOOL, TID[index_in_TID].bvalue);
+                break;
+            case 3:
+                lexem = Lex(LEX_STR, TID[index_in_TID].svalue);
+                break;
+        }
+    }
+}
+
 bool toBool(Lex lexem)
 {
-    switch (lexem.get_type_of_value()) {
+    from_adreess_to_value(lexem);
+    switch (lexem.get_type_of_value())
+    {
         case 0:
         case 4:
             return false;
@@ -73,9 +116,62 @@ bool toBool(Lex lexem)
         case 3:
             return (lexem.get_svalue() != string(""));
             break;
-            
         default:
             return true;
+            break;
+    }
+}
+
+int toInt(Lex lexem)
+{
+    from_adreess_to_value(lexem);
+    int num_from_str;
+    switch (lexem.get_type_of_value())
+    {
+    case 1:
+        return (lexem.get_ivalue());
+        break;
+    case 2:
+        return (lexem.get_bvalue() != false);
+        break;
+    case 3:
+        //return (strtol((lexem.get_svalue()).c_str()),NULL,10);//no
+        break;
+    case 4:
+        return 0;
+        break;
+    default:
+        return 0;//no
+        break;
+    }
+}
+
+string toString(Lex lexem)
+{
+    from_adreess_to_value(lexem);
+    char temp_str[100];
+    switch (lexem.get_type_of_value())
+    {
+        case 0:
+            return string("undefined");
+            break;
+        case 1:
+            //itoa(lexem.get_ivalue(), temp_str, 10);
+            //return string(temp_str);
+            break;
+        case 2:
+            if (lexem.get_bvalue())
+                return string("true");
+            else
+                return string("false");
+            break;
+        case 3:
+            return (lexem.get_svalue());
+            break;
+        case 4:
+            return string("null");
+        default:
+            return string("");//no
             break;
     }
 }
@@ -88,7 +184,7 @@ void Executer::execute(Poliz& poliz)
     int index = 0;
     int size = poliz.get_free();
     int index_in_TID;
-    Lex check, arg, to, from;
+    Lex check, arg, to, from, op1, op2;
     char temp_str[100] = "";
     
     while (index < size)
@@ -104,7 +200,7 @@ void Executer::execute(Poliz& poliz)
             case POLIZ_ADDRESS:
                 args.push(curr_lex);
                 break;
-            case LEX_ID:
+            /*case LEX_ID:
                 index_in_TID = curr_lex.get_ivalue();
                 switch (TID[index_in_TID].type_of_value)
                 {
@@ -121,7 +217,7 @@ void Executer::execute(Poliz& poliz)
                     args.push(Lex(LEX_STR, TID[index_in_TID].svalue));
                     break;
                 }
-                break;
+                break;*/
             case POLIZ_GO:
                 index = (args.pop()).get_ivalue() - 1;
                 break;
@@ -132,6 +228,7 @@ void Executer::execute(Poliz& poliz)
                 break;
             case LEX_WRITE:
                 arg = args.pop();
+                from_adreess_to_value(arg);
                 switch (arg.get_type_of_value())
                  {
                  case 0:
@@ -155,23 +252,268 @@ void Executer::execute(Poliz& poliz)
                 from = args.pop();
                 to = args.pop();
                 index_in_TID = to.get_ivalue();
+                from_adreess_to_value(from);
                 (TID[index_in_TID]).type_of_value = from.get_type_of_value();
                 switch (from.get_type_of_value())
                 {
                 case 1:
                         (TID[index_in_TID]).ivalue = from.get_ivalue();
+                        args.push(Lex(LEX_NUM, (TID[index_in_TID]).ivalue));
                         break;
                 case 2:
                         (TID[index_in_TID]).bvalue = from.get_bvalue();
+                        args.push(Lex(LEX_NUM, (TID[index_in_TID]).ivalue));
                         break;
                 case 3:
                         (TID[index_in_TID]).svalue = from.get_svalue();
+                        args.push(Lex(LEX_NUM, (TID[index_in_TID]).ivalue));
                         break;
                 }
                 break;
             case LEX_ENV:
                 strcpy(temp_str, ((args.pop()).get_svalue()).c_str());
                 args.push(Lex(LEX_STR, string(getenv(temp_str))));
+                break;
+            case LEX_ADD:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                switch (op1.get_type_of_value()) {
+                    case 1:
+                        args.push(Lex(LEX_NUM, toInt(op1)+toInt(op2)));
+                        break;
+                    case 3:
+                        args.push(Lex(LEX_STR, toString(op1)+toString(op2)));
+                        break;
+                    default:
+                        throw "Execute: wrong operands +";
+                        break;
+                }
+                break;
+            case LEX_SUB:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                switch (op1.get_type_of_value()) {
+                    case 1:
+                        args.push(Lex(LEX_NUM, toInt(op1)-toInt(op2)));
+                        break;
+                    default:
+                        throw "Execute: wrong operands -\n";
+                        break;
+                }
+                break;
+            case LEX_MUL:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                switch (op1.get_type_of_value()) {
+                    case 1:
+                        args.push(Lex(LEX_NUM, toInt(op1)*toInt(op2)));
+                        break;
+                    default:
+                        throw "Execute: wrong operands *\n";
+                        break;
+                }
+                break;
+            case LEX_DIV:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                switch (op1.get_type_of_value()) {
+                    case 1:
+                        args.push(Lex(LEX_NUM, toInt(op1)/toInt(op2)));
+                        break;
+                    default:
+                        throw "Execute: wrong operands /\n";
+                        break;
+                }
+                break;
+            case LEX_PERCENT:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                switch (op1.get_type_of_value()) {
+                    case 1:
+                        args.push(Lex(LEX_NUM, toInt(op1)%toInt(op2)));
+                        break;
+                    default:
+                        throw "Execute: wrong operands %\n";
+                        break;
+                }
+                break;
+            case LEX_SEMICOLON:
+                args.reset();
+                break;
+            case LEX_NOT:
+                args.push(Lex(LEX_BOOL, !toBool(args.pop())));
+                break;
+            case LEX_INC: // i++ only ++i as i = i+1;
+                arg = args.pop();
+                if ((TID[arg.get_ivalue()]).type_of_value == 1)
+                {
+                    args.push(Lex(LEX_NUM, (TID[arg.get_ivalue()]).ivalue));
+                    (TID[arg.get_ivalue()]).ivalue += 1;
+                }
+                else throw string("Execute: wrond operand i++");
+                break;
+            case LEX_DEC: // i-- only
+                arg = args.pop();
+                if ((TID[arg.get_ivalue()]).type_of_value == 1)
+                {
+                    args.push(Lex(LEX_NUM, (TID[arg.get_ivalue()]).ivalue));
+                    (TID[arg.get_ivalue()]).ivalue -= 1;
+                }
+                else throw string("Execute: wrond operand i--");
+                break;
+            case LEX_EQ:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                switch (op1.get_type_of_value())
+                {
+                    case 0:
+                        args.push(Lex(LEX_BOOL, (toBool(op1) == toBool(op2))));
+                        break;
+                    case 1:
+                        args.push(Lex(LEX_BOOL, (toInt(op1) == toInt(op2))));
+                        break;
+                    case 2:
+                        args.push(Lex(LEX_BOOL, (toBool(op1) == toBool(op2))));
+                        break;
+                    case 3:
+                        args.push(Lex(LEX_BOOL, (toString(op1) == toString(op2))));
+                        break;
+                    default:
+                        throw string("Execute: wrong operands ==");
+                        break;
+                }
+                break;
+            case LEX_NEQ:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                switch (op1.get_type_of_value())
+                {
+                case 0:
+                    args.push(Lex(LEX_BOOL, (toBool(op1) != toBool(op2))));
+                    break;
+                case 1:
+                    args.push(Lex(LEX_BOOL, (toInt(op1) != toInt(op2))));
+                    break;
+                case 2:
+                    args.push(Lex(LEX_BOOL, (toBool(op1) != toBool(op2))));
+                    break;
+                case 3:
+                    args.push(Lex(LEX_BOOL, (toString(op1) != toString(op2))));
+                    break;
+                default:
+                    throw string("Execute: wrong operands !=");
+                    break;
+                }
+                break;
+            case LEX_G:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                switch (op1.get_type_of_value())
+                {
+                case 0:
+                    args.push(Lex(LEX_BOOL, (toBool(op1) > toBool(op2))));
+                    break;
+                case 1:
+                    args.push(Lex(LEX_BOOL, (toInt(op1) > toInt(op2))));
+                    break;
+                case 2:
+                    args.push(Lex(LEX_BOOL, (toBool(op1) > toBool(op2))));
+                    break;
+                case 3:
+                    args.push(Lex(LEX_BOOL, (toString(op1) > toString(op2))));
+                    break;
+                default:
+                    throw string("Execute: wrong operands >");
+                    break;
+                }
+                break;
+            case LEX_GE:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                switch (op1.get_type_of_value())
+                {
+                case 0:
+                    args.push(Lex(LEX_BOOL, (toBool(op1) >= toBool(op2))));
+                    break;
+                case 1:
+                    args.push(Lex(LEX_BOOL, (toInt(op1) >= toInt(op2))));
+                    break;
+                case 2:
+                    args.push(Lex(LEX_BOOL, (toBool(op1) >= toBool(op2))));
+                    break;
+                case 3:
+                    args.push(Lex(LEX_BOOL, (toString(op1) >= toString(op2))));
+                    break;
+                default:
+                    throw string("Execute: wrong operands >=");
+                    break;
+                }
+                break;
+            case LEX_L:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                switch (op1.get_type_of_value())
+                {
+                case 0:
+                    args.push(Lex(LEX_BOOL, (toBool(op1) < toBool(op2))));
+                    break;
+                case 1:
+                    args.push(Lex(LEX_BOOL, (toInt(op1) < toInt(op2))));
+                    break;
+                case 2:
+                    args.push(Lex(LEX_BOOL, (toBool(op1) < toBool(op2))));
+                    break;
+                case 3:
+                    args.push(Lex(LEX_BOOL, (toString(op1) < toString(op2))));
+                    break;
+                default:
+                    throw string("Execute: wrong operands <");
+                    break;
+                }
+                break;
+            case LEX_LE:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                switch (op1.get_type_of_value())
+            {
+                case 0:
+                    args.push(Lex(LEX_BOOL, (toBool(op1) <= toBool(op2))));
+                    break;
+                case 1:
+                    args.push(Lex(LEX_BOOL, (toInt(op1) <= toInt(op2))));
+                    break;
+                case 2:
+                    args.push(Lex(LEX_BOOL, (toBool(op1) <= toBool(op2))));
+                    break;
+                case 3:
+                    args.push(Lex(LEX_BOOL, (toString(op1) <= toString(op2))));
+                    break;
+                default:
+                    throw string("Execute: wrong operands <=");
+                    break;
+            }
                 break;
             default:
                 cout << curr_lex;

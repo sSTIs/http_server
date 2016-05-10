@@ -70,14 +70,30 @@ enum type_of_lex
     POLIZ_LABEL
 };
 
+template <class T, int max_size >
+class Stack
+{
+    T buf[max_size];
+    int top;
+public:
+    Stack() { top = 0; }
+    void reset() { top = 0; }
+    void push(T i);
+    T pop();
+    bool is_empty() { return top == 0; }
+    bool is_full() { return top == max_size; }
+};
+
 class Lex //lexem, that has type and value
 {
     type_of_lex t_lex;
-    int type_of_value;// 0 1i 2b 3s
+    int type_of_value;// 0 undef 1i 2b 3s ?4 null?
     int iv_lex;
     bool bv_lex;
     string sv_lex;
 public:
+    bool number_NaN;
+    
     Lex(type_of_lex t, int iv);
     Lex(type_of_lex t, bool bv);
     Lex(type_of_lex t, string sv);
@@ -97,20 +113,19 @@ public:
 class Ident //identificator
 {
     char *name;
-    bool declare;
-    bool assign;
-    
 public:
-    int type_of_value;
+    int declare; //area of visibility -1 no 0 main  ... functions
+    Stack<int,20> prev_declare;
+    Stack<Lex,20> prev_value;
+    int type_of_value;// ... 5 function  ivalue = label of function
     int ivalue;
     bool bvalue;
     string svalue;
     
     Ident();
+    ~Ident();
     char *get_name();
     void put_name(char *n);
-    bool get_declare();
-    void put_declare();
     type_of_lex get_type();
 };
 
@@ -124,6 +139,7 @@ public:
     ~Table_ident();
     Ident& operator[](int index);
     int put(char *buf);
+    int get_top() const;
 };
 
 class Scanner //Scan file and make table of idents, lexems

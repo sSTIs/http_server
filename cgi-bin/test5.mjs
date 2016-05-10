@@ -1,18 +1,18 @@
 #! /Users/user/Documents/CMC/prac4/server/server/mjs
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
-	var x = 10;
-	while (x)
+	var x = 1;
+	while (!(x == 10))
 	{
-		write(x, "\n");
-		x=0;
+		write(x++, "\n");
 	}
+	write(" ",x, "\n");
 	write("qwe", "\n");
 	do
 	{
-		x=3;
+		x = x + x;
 		write(x);
-	}while (x);
+	}while (x != 80);
 	write("\n");
 }
 </SCRIPT>

@@ -12,22 +12,54 @@ using namespace std;
 
 extern Table_ident TID;
 
+//! class Stack
+//!======================================================================================
+template <class T, int max_size >
+void Stack <T, max_size >::push(T i) {
+    if ( !is_full() )
+    {
+        buf[top] = i;
+        ++top;
+    }
+    else throw string("Stack_is_full");
+}
+
+template <class T, int max_size >
+T Stack <T, max_size >::pop() {
+    if ( !is_empty() )
+    {
+        --top;
+        return buf[top];
+    }
+    else throw string("Stack_is_empty");
+}
+
 //! class Parser - semantic
 //!======================================================================================
 void Parser::declare(int num_in_TID)
 {
-    if (TID[num_in_TID].get_declare())
+    if (TID[num_in_TID].declare == area_visibility)
         throw "Semantic error: " + string(TID[num_in_TID].get_name()) +" declared twice";
     else
-        TID[num_in_TID].put_declare();
+    {
+        (TID[num_in_TID].prev_declare).push(TID[num_in_TID].declare);
+        TID[num_in_TID].declare = area_visibility;
+    }
 }
 
 void Parser::check_declare(int num_in_TID)
 {
-    if (!(TID[num_in_TID].get_declare()))
+    if (TID[num_in_TID].declare != area_visibility)
         throw "Semantic error: " + string(TID[num_in_TID].get_name()) +" not declared";
-    else
-        TID[num_in_TID].put_declare();
+}
+
+void Parser::undeclare()
+{
+    for (int i = 0; i < TID.get_top(); ++i)
+    {
+        if (TID[i].declare == area_visibility)
+            TID[i].declare = (TID[i].prev_declare).pop();
+    }
 }
 
 //! class Parser - main functions
@@ -48,7 +80,7 @@ void Parser::get_lex()
 
 Parser::Parser(const char * program) :scanner(program), program_poliz(1000)
 {
-    //nothing else
+    area_visibility = 0;
 }
 //! class Parser - recursive descent
 //!======================================================================================
@@ -134,7 +166,7 @@ void Parser::Command()
         }
         else throw curr_lex;
     }
-    else if (curr_lex_type == LEX_DO)
+    else if (curr_lex_type == LEX_DO)// no
     {
         get_lex();
         int cycle_lable = program_poliz.get_free();
@@ -146,6 +178,7 @@ void Parser::Command()
             {
                 get_lex();
                 Expression();
+                program_poliz.put_lex(Lex(LEX_NOT));
                 if (curr_lex_type == LEX_RPAREN)
                 {
                     get_lex();
@@ -153,6 +186,7 @@ void Parser::Command()
                     program_poliz.put_lex(Lex(POLIZ_FGO));
                     if (curr_lex_type == LEX_SEMICOLON)
                     {
+                        program_poliz.put_lex(Lex(LEX_SEMICOLON));
                         get_lex();
                     }
                     else throw curr_lex;
@@ -184,6 +218,7 @@ void Parser::Command()
                 get_lex();
                 if (curr_lex_type == LEX_SEMICOLON)
                 {
+                    program_poliz.put_lex(Lex(LEX_SEMICOLON));
                     get_lex();
                 }
                 else throw curr_lex;
@@ -192,7 +227,8 @@ void Parser::Command()
         }
         else throw curr_lex;
     }
-    else if (curr_lex_type == LEX_ID)
+    /*else if (curr_lex_type == LEX_ID &&
+             TID[curr_lex.get_ivalue()].type_of_value != 5)
     {
         int num_in_TID = curr_lex.get_ivalue();
         check_declare(num_in_TID);
@@ -207,19 +243,20 @@ void Parser::Command()
             {
                 get_lex();
                 program_poliz.put_lex(Lex(LEX_ASSIGN));
+                program_poliz.put_lex(Lex(LEX_SEMICOLON));
             }
             else throw curr_lex;
         }
         else throw curr_lex;
-    }
-    else if (curr_lex_type == LEX_STR ||
+    }*/
+    else if (curr_lex_type == LEX_STR || curr_lex_type == LEX_ID ||
              curr_lex_type == LEX_NUM || curr_lex_type == LEX_BOOL)
     {
         Expression();
         //stack_type.pop();
         if (curr_lex_type == LEX_SEMICOLON)
         {
-            program_poliz.put_lex(Lex(LEX_WRITE));
+            program_poliz.put_lex(Lex(LEX_SEMICOLON));
             get_lex();
         }
         else throw curr_lex;
@@ -233,12 +270,60 @@ void Parser::Command()
         } while (curr_lex_type == LEX_COMMA && curr_lex_type != LEX_FIN);
         if (curr_lex_type == LEX_SEMICOLON)
         {
+            program_poliz.put_lex(Lex(LEX_SEMICOLON));
             get_lex();
         }
         else throw curr_lex;
     }
+    else if (curr_lex_type == LEX_FUNC && area_visibility == 0)
+    {
+        get_lex();
+        program_poliz.change_free(); //free to functions place
+        if (curr_lex_type != LEX_ID)
+            throw curr_lex;
+        (TID[curr_lex.get_ivalue()]).ivalue = program_poliz.get_free();
+        (TID[curr_lex.get_ivalue()]).type_of_value = 5;
+        prev_area_visibility.push(area_visibility);
+        area_visibility = curr_lex.get_ivalue();
+        get_lex();
+        if (curr_lex_type != LEX_LPAREN)
+            throw curr_lex;
+        get_lex();
+        if (curr_lex_type == LEX_RPAREN)
+        {
+            get_lex();
+        }
+        else
+        {
+            if (curr_lex_type != LEX_ID)
+                throw curr_lex;
+            program_poliz.put_lex(curr_lex);
+            get_lex();
+            while (curr_lex_type == LEX_COMMA)
+            {
+                get_lex();
+                if (curr_lex_type != LEX_ID)
+                    throw curr_lex;
+                program_poliz.put_lex(curr_lex);
+                get_lex();
+            }
+            if (curr_lex_type != LEX_RPAREN)
+                throw curr_lex;
+            get_lex();
+        }
+        program_poliz.put_lex(Lex(LEX_FUNC));
+        Command();
+        program_poliz.put_free_space();
+        program_poliz.put_lex(Lex(POLIZ_GO));
+        program_poliz.change_free(); // free to main place
+        undeclare();
+        area_visibility = prev_area_visibility.pop();
+    }
+    else if (curr_lex_type == LEX_FUNC && area_visibility != 0)
+        throw curr_lex;
     else if (curr_lex_type == LEX_SEMICOLON)
     {
+        program_poliz.put_lex(Lex(LEX_SEMICOLON));
         get_lex();
     }
     else Program1();
@@ -262,45 +347,73 @@ void Parser::Declaration()
     }
     else throw curr_lex;
 }
-
+//! expression
+//!======================================================================================
 void Parser::Expression()
 {
     Expression1();
+    while (curr_lex_type == LEX_ASSIGN)
+    {
+        //stack_type.push(curr_lex_type);
+        if ((program_poliz[program_poliz.get_free() - 1]).get_type() != POLIZ_ADDRESS)
+            throw curr_lex;
+        get_lex();
+        Expression1();
+        program_poliz.put_lex(Lex(LEX_ASSIGN));
+    }
+}
+void Parser::Expression1()
+{
+    Expression2();
     while (curr_lex_type == LEX_OR)
     {
         //stack_type.push(curr_lex_type);
         get_lex();
-        Expression1();
-        program_poliz.put_lex(Lex(LEX_OR));
-    }
-}
-
-void Parser::Expression1()
-{
-    Expression2();
-    while (curr_lex_type == LEX_AND)
-    {
-        //stack_type.push(curr_lex_type);
-        get_lex();
         Expression2();
-        program_poliz.put_lex(Lex(LEX_AND));
+        program_poliz.put_lex(Lex(LEX_OR));
     }
 }
 
 void Parser::Expression2()
 {
     Expression3();
+    while (curr_lex_type == LEX_AND)
+    {
+        //stack_type.push(curr_lex_type);
+        get_lex();
+        Expression3();
+        program_poliz.put_lex(Lex(LEX_AND));
+    }
+}
+
+void Parser::Expression3()
+{
+    Expression4();
+    while (curr_lex_type == LEX_GE || curr_lex_type == LEX_G ||
+           curr_lex_type == LEX_LE || curr_lex_type == LEX_L)
+    {
+        type_of_lex op = curr_lex_type;
+        //stack_type.push(curr_lex_type);
+        get_lex();
+        Expression4();
+        program_poliz.put_lex(Lex(op));
+    }
+}
+
+void Parser::Expression4()
+{
+    Expression5();
     while (curr_lex_type == LEX_EQ || curr_lex_type == LEX_NEQ)
     {
         type_of_lex op = curr_lex_type;
         //stack_type.push(curr_lex_type);
         get_lex();
-        Expression3();
+        Expression5();
         program_poliz.put_lex(Lex(op));
     }
 }
 
-void Parser::Expression3()
+void Parser::Expression5()
 {
     Summand();
     while (curr_lex_type == LEX_ADD || curr_lex_type == LEX_SUB)
@@ -341,10 +454,52 @@ void Parser::Factor()
     }
     else if (curr_lex_type == LEX_ID)
     {
-        //stack_type.push((TID[curr_lex.get_ivalue()]).get_type());
-        check_declare(curr_lex.get_ivalue());
-        program_poliz.put_lex(curr_lex);
-        get_lex();
+        if (TID[curr_lex.get_ivalue()].type_of_value != 5)
+        {
+            //stack_type.push((TID[curr_lex.get_ivalue()]).get_type());
+            check_declare(curr_lex.get_ivalue());
+            program_poliz.put_lex(Lex(POLIZ_ADDRESS, curr_lex.get_ivalue()));
+            get_lex();
+            if (curr_lex_type == LEX_INC)
+            {
+                program_poliz.put_lex(Lex(LEX_INC));
+                get_lex();
+            }
+            else if (curr_lex_type == LEX_DEC)
+            {
+                program_poliz.put_lex(Lex(LEX_DEC));
+                get_lex();
+            }
+        }
+        else
+        {
+            get_lex();
+            if (curr_lex_type != LEX_LPAREN)
+                throw curr_lex;
+            get_lex();
+            if (curr_lex_type == LEX_RPAREN)
+            {
+                get_lex();
+            }
+            else
+            {
+                if (curr_lex_type != LEX_NUM && curr_lex_type != LEX_BOOL &&
+                    curr_lex_type != LEX_STR)
+                    throw curr_lex;
+                get_lex();
+                while (curr_lex_type == LEX_COMMA)
+                {
+                    get_lex();
+                    if (curr_lex_type != LEX_NUM && curr_lex_type != LEX_BOOL &&
+                        curr_lex_type != LEX_STR)
+                        throw curr_lex;
+                    get_lex();
+                }
+                if (curr_lex_type != LEX_RPAREN)
+                    throw curr_lex;
+                get_lex();
+            }
+        }
     }
     else if (curr_lex_type == LEX_NUM || curr_lex_type == LEX_BOOL ||
              curr_lex_type == LEX_STR)
@@ -362,9 +517,23 @@ void Parser::Factor()
         else
             stack_type.push(LEX_SUB);*/
         get_lex();
-        Factor();
-        program_poliz.put_lex(Lex(LEX_NUM,1));
-        program_poliz.put_lex(Lex(op));
+        if (curr_lex_type == LEX_ID)
+        {
+            if (TID[curr_lex.get_ivalue()].type_of_value != 5)
+            {
+                program_poliz.put_lex(Lex(POLIZ_ADDRESS, curr_lex.get_ivalue()));
+                program_poliz.put_lex(curr_lex);
+                program_poliz.put_lex(Lex(LEX_NUM,1));
+                if (op == LEX_INC)
+                    program_poliz.put_lex(Lex(LEX_ADD));
+                else
+                    program_poliz.put_lex(Lex(LEX_SUB));
+                program_poliz.put_lex(Lex(LEX_ASSIGN));
+                get_lex();
+            }
+            else throw curr_lex;
+        }
+        else throw curr_lex;
     }
     else if (curr_lex_type == LEX_NOT)
     {

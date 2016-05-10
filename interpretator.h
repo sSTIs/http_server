@@ -10,39 +10,24 @@
 
 using namespace std;
 
-template <class T, int max_size >
-class Stack
-{
-    T buf[max_size];
-    int top;
-public:
-    Stack() { top = 0; }
-    void reset() { top = 0; }
-    void push(T i);
-    T pop();
-    bool is_empty(){ return top == 0; }
-    bool is_full() { return top == max_size; }
-};
-
 // like verctor
 class Poliz
 {
     Lex *buf;
     int size;
+    int second_free;// one position for main, other for functions
     int free;
 public:
-    Poliz (int max_size)
-    {
-        buf = new Lex [size = max_size];
-        free = 0;
-    }
+    Poliz (int max_size);
+    
     ~Poliz() { delete []buf; };
     void put_lex(Lex l) { buf[free]=l; ++free; };
     void put_lex(Lex l, int place) { buf[place]=l; };
     void put_free_space() { ++free; };
     int get_free() { return free; };
+    void change_free(); //change main <-> function
     Lex& operator[] (int index);
-    void print();
+    void print(); // works if free on main
 };
 
 class Parser
@@ -60,23 +45,31 @@ class Parser
     void Expression1();
     void Expression2();
     void Expression3();
+    void Expression4();
+    void Expression5();
     void Summand();
     void Factor();
     
     //semantic actions
     void check_declare(int num_in_TID);
     void declare(int num_in_TID);
+    void undeclare();
     
     void get_lex();
     
 public:
+    int area_visibility;
+    Stack<int,100> prev_area_visibility;
     Poliz program_poliz;
     Parser(const char *program);
     void analyze();
 };
 //! types conversion
 //!============================================================================
+void from_adreess_to_value(Lex& lexem);
 bool toBool(Lex lexem);
+int toInt(Lex lexem);
+string toString(Lex lexem);
 
 class Executer
 {
