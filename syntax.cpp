@@ -281,7 +281,7 @@ void Parser::Command()
     else if (curr_lex_type == LEX_STR || curr_lex_type == LEX_ID ||
              curr_lex_type == LEX_NUM || curr_lex_type == LEX_BOOL ||
              curr_lex_type == LEX_INC || curr_lex_type == LEX_DEC ||
-             curr_lex_type == LEX_NOT)
+             curr_lex_type == LEX_NOT || curr_lex_type == LEX_SUB)
     {
         Expression();
         //stack_type.pop();
@@ -576,14 +576,19 @@ void Parser::Factor()
     {
         get_lex();
         if (curr_lex_type == LEX_NUM || curr_lex_type == LEX_BOOL ||
-            curr_lex_type == LEX_STR)
+            curr_lex_type == LEX_STR || curr_lex_type == LEX_ID)
         {
             //stack_type.push(curr_lex_type);
             //stack_type.push(LEX_SUB);
             //stack_type.push(LEX_NUM);
-            get_lex();
             program_poliz.put_lex(Lex(LEX_NUM, 0));
             Factor();
+            program_poliz.put_lex(Lex(LEX_SUB));
+        }
+        else
+        {
+            program_poliz.put_lex(Lex(LEX_NUM, 0));
+            Expression();
             program_poliz.put_lex(Lex(LEX_SUB));
         }
     }

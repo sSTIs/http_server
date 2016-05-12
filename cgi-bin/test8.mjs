@@ -4,5 +4,7 @@
 	var x = 3;
 	var y = true;
 	var z = "asd";
+	x = -(x--);
+	write(x);
 }
 </SCRIPT>
