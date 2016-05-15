@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     if (argc != 2)
         exit(1);
     
-    cout << "Content-type: text/html\r\n\r\n"; //temporary for tests
+    //cout << "Content-type: text/html\r\n\r\n"; //temporary for tests
     try
     {
         //syntax analyze
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     {
         cerr << "All very bad" << endl;
     }
-    cout << "end of all program"<< endl;
+    //cout << "end of all program"<< endl;
     //Lex analyze
     /*Scanner scanner(argv[1]);
     Lex a;

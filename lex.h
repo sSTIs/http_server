@@ -63,11 +63,13 @@ enum type_of_lex
     LEX_LEN,
     LEX_BEGIN,
     LEX_END,
+    LEX_FIN_PART,
     LEX_FIN,
     POLIZ_GO,
     POLIZ_FGO,
     POLIZ_ADDRESS,
-    POLIZ_LABEL
+    POLIZ_LABEL,
+    POLIZ_CALL
 };
 
 template <class T, int max_size >
@@ -82,6 +84,7 @@ public:
     T pop();
     bool is_empty() { return top == 0; }
     bool is_full() { return top == max_size; }
+    T top_element() { if (!is_empty()) return buf[top - 1]; else throw string("Stack is empty"); }
 };
 
 class Lex //lexem, that has type and value
@@ -92,8 +95,6 @@ class Lex //lexem, that has type and value
     bool bv_lex;
     string sv_lex;
 public:
-    bool number_NaN;
-    
     Lex(type_of_lex t, int iv);
     Lex(type_of_lex t, bool bv);
     Lex(type_of_lex t, string sv);
@@ -115,8 +116,8 @@ class Ident //identificator
     char *name;
 public:
     int declare; //area of visibility -1 no 0 main  ... functions
-    Stack<int,20> prev_declare;
-    Stack<Lex,20> prev_value;
+    int parametrs_number;
+    int prev_declare;
     int type_of_value;// ... 5 function  ivalue = label of function
     int ivalue;
     bool bvalue;

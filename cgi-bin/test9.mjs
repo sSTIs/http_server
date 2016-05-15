@@ -1,10 +1,14 @@
 #! /Users/user/Documents/CMC/prac4/server/server/mjs
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
-	var x = 3;
-	var sum = 0;
-	for (x = 1;x < 5; x++)
-		sum = sum + x;
-	write(sum, "\n");
+	function x2(q)
+	{
+		return 2*q;
+	}
+	function x(y, z)
+	{
+		return x2(y)+z;
+	}
+	write(x(2,3) + 3, "\n");
 }
 </SCRIPT>

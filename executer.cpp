@@ -37,11 +37,11 @@ T Stack <T, max_size >::pop() {
 Lex& Poliz::operator[] (int index)
 {
     if (index > size)
-        throw "POLIZ:out of array";
+        throw string("POLIZ:out of array");
     else
     {
         if ( index > free )
-            throw "POLIZ: indefinite element of array";
+            throw string("POLIZ: indefinite element of array");
         else return buf[index];
     }
 }
@@ -180,18 +180,27 @@ string toString(Lex lexem)
 
 //! class Executer
 //!======================================================================================
+Executer::Executer()
+{
+    area_visibility = 0;
+    index = 0;
+}
 void Executer::execute(Poliz& poliz)
 {
     Stack <Lex, 1000> args;
-    int index = 0;
-    int size = poliz.get_free();
     int index_in_TID;
     Lex check, arg, to, from, op1, op2;
     char temp_str[100] = "";
+    int parametrs_number;
     
-    while (index < size)
+    for (;;)
     {
         curr_lex = poliz[index];
+        if (curr_lex.get_type() == LEX_FIN || curr_lex.get_type() == LEX_FIN_PART)
+        {
+            ++index;
+            break;
+        }
         switch (curr_lex.get_type())
         {
             case LEX_UNDEF:
@@ -246,17 +255,52 @@ void Executer::execute(Poliz& poliz)
                         break;
                 case 2:
                         (TID[index_in_TID]).bvalue = from.get_bvalue();
-                        args.push(Lex(LEX_NUM, (TID[index_in_TID]).ivalue));
+                        args.push(Lex(LEX_BOOL, (TID[index_in_TID]).bvalue));
                         break;
                 case 3:
                         (TID[index_in_TID]).svalue = from.get_svalue();
-                        args.push(Lex(LEX_NUM, (TID[index_in_TID]).ivalue));
+                        args.push(Lex(LEX_STR, (TID[index_in_TID]).svalue));
                         break;
                 }
                 break;
             case LEX_ENV:
                 strcpy(temp_str, ((args.pop()).get_svalue()).c_str());
                 args.push(Lex(LEX_STR, string(getenv(temp_str))));
+                break;
+            case POLIZ_CALL:
+                ++area_visibility;
+                if (area_visibility == 1)
+                    poliz.change_free();
+                index = curr_lex.get_ivalue();
+                parametrs_number = args.pop().get_ivalue();
+                return_address.push(args.pop());
+                for (int i = 0; i < parametrs_number; ++i)
+                {
+                    from = args.pop();
+                    to = poliz[index + parametrs_number - 1 - i];
+                    index_in_TID = to.get_ivalue();
+                    from_adreess_to_value(from);
+                    (TID[index_in_TID]).type_of_value = from.get_type_of_value();
+                    switch (from.get_type_of_value())
+                    {
+                        case 1:
+                            (TID[index_in_TID]).ivalue = from.get_ivalue();
+                            break;
+                        case 2:
+                            (TID[index_in_TID]).bvalue = from.get_bvalue();
+                            break;
+                        case 3:
+                            (TID[index_in_TID]).svalue = from.get_svalue();
+                            break;
+                    }
+                }
+                index += parametrs_number;
+                break;
+            case LEX_RETURN:
+                index = return_address.pop().get_ivalue() - 1;
+                if (area_visibility == 1)
+                    poliz.change_free();
+                --area_visibility;
                 break;
             case LEX_ADD:
                 op2 = args.pop();
@@ -271,7 +315,7 @@ void Executer::execute(Poliz& poliz)
                         args.push(Lex(LEX_STR, toString(op1)+toString(op2)));
                         break;
                     default:
-                        throw "Execute: wrong operands +";
+                        throw string("Execute: wrong operands +");
                         break;
                 }
                 break;
@@ -285,7 +329,7 @@ void Executer::execute(Poliz& poliz)
                         args.push(Lex(LEX_NUM, toInt(op1)-toInt(op2)));
                         break;
                     default:
-                        throw "Execute: wrong operands -\n";
+                        throw string("Execute: wrong operands -\n");
                         break;
                 }
                 break;
@@ -299,7 +343,7 @@ void Executer::execute(Poliz& poliz)
                         args.push(Lex(LEX_NUM, toInt(op1)*toInt(op2)));
                         break;
                     default:
-                        throw "Execute: wrong operands *\n";
+                        throw string("Execute: wrong operands *\n");
                         break;
                 }
                 break;
@@ -313,7 +357,7 @@ void Executer::execute(Poliz& poliz)
                         args.push(Lex(LEX_NUM, toInt(op1)/toInt(op2)));
                         break;
                     default:
-                        throw "Execute: wrong operands /\n";
+                        throw string("Execute: wrong operands /\n");
                         break;
                 }
                 break;
@@ -327,12 +371,12 @@ void Executer::execute(Poliz& poliz)
                         args.push(Lex(LEX_NUM, toInt(op1)%toInt(op2)));
                         break;
                     default:
-                        throw "Execute: wrong operands %\n";
+                        throw string("Execute: wrong operands %\n");
                         break;
                 }
                 break;
             case LEX_SEMICOLON:
-                args.reset();
+                args.pop();
                 break;
             case LEX_NOT:
                 args.push(Lex(LEX_BOOL, !toBool(args.pop())));
@@ -481,7 +525,7 @@ void Executer::execute(Poliz& poliz)
                 op1 = args.pop();
                 from_adreess_to_value(op1);
                 switch (op1.get_type_of_value())
-            {
+                {
                 case 0:
                     args.push(Lex(LEX_BOOL, (toBool(op1) <= toBool(op2))));
                     break;
@@ -497,7 +541,21 @@ void Executer::execute(Poliz& poliz)
                 default:
                     throw string("Execute: wrong operands <=");
                     break;
-            }
+                }
+                break;
+            case LEX_OR:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                args.push(Lex(LEX_BOOL, (toBool(op1) || toBool(op2))));
+                break;
+            case LEX_AND:
+                op2 = args.pop();
+                from_adreess_to_value(op2);
+                op1 = args.pop();
+                from_adreess_to_value(op1);
+                args.push(Lex(LEX_BOOL, (toBool(op1) && toBool(op2))));
                 break;
             default:
                 cout << curr_lex;
@@ -505,13 +563,20 @@ void Executer::execute(Poliz& poliz)
         }
         ++index;
     }
-    cout << "Execute has finished"<<endl;
+    //cout << "Execute has finished"<<endl;
 }
 
 //! class Executer
 //!======================================================================================
 void Interpretator::interpretation()
 {
-    parser.analyze();
-    executer.execute(parser.program_poliz);
+    for (;;)
+    {
+        if (parser.analyze())
+        {
+            executer.execute(parser.program_poliz);
+        }
+        else break;
+    }
+    //parser.program_poliz.print();
 }

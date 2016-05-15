@@ -41,7 +41,6 @@ Lex::Lex()
     bv_lex = false;
     sv_lex = string("");
     type_of_value = 0;
-    number_NaN = false;
 }
 Lex::Lex(type_of_lex t, int iv)
 {
@@ -50,7 +49,6 @@ Lex::Lex(type_of_lex t, int iv)
     bv_lex = false;
     sv_lex = string("");
     type_of_value = 1;
-    number_NaN = false;
 }
 
 Lex::Lex(type_of_lex t, string sv)
@@ -60,7 +58,6 @@ Lex::Lex(type_of_lex t, string sv)
     iv_lex = 0;
     bv_lex = false;
     type_of_value = 3;
-    number_NaN = false;
 }
 
 Lex::Lex(type_of_lex t, bool bv)
@@ -70,7 +67,6 @@ Lex::Lex(type_of_lex t, bool bv)
     iv_lex = 0;
     sv_lex = string("");
     type_of_value = 2;
-    number_NaN = false;
 }
 
 Lex::Lex(type_of_lex t)
@@ -80,7 +76,6 @@ Lex::Lex(type_of_lex t)
     iv_lex = 0;
     sv_lex = string("");
     type_of_value = 0;
-    number_NaN = false;
 }
 
 Lex::Lex(const Lex& l)
@@ -90,7 +85,6 @@ Lex::Lex(const Lex& l)
     iv_lex = l.get_ivalue();
     bv_lex = l.get_bvalue();
     sv_lex = l.get_svalue();
-    number_NaN = l.number_NaN;
 }
 
 Lex& Lex::operator =(const Lex& l)
@@ -102,7 +96,6 @@ Lex& Lex::operator =(const Lex& l)
         iv_lex = l.get_ivalue();
         bv_lex = l.get_bvalue();
         sv_lex = l.get_svalue();
-        number_NaN = l.number_NaN;
         return *this;
     }
     else return *this;
@@ -113,8 +106,8 @@ char *lexems_in_string[] =
     "null", "undefined", "bool", "number", "string", "identificator", "+", "-", "*","/","%","=","++","--",
     "&&","||","!","==","!=",">",">=","<","<=","function","var","if","else","while","for","do",
     "in","break","continue","return","typeof",".",",",";","(",")","[","]","write",
-    "read","Environment", "length","{","}","final", "Poliz go", "Poliz false go",
-    "Poliz address", "Poliz label"
+    "read","Environment", "length","{","}", "part final","final", "Poliz go", "Poliz false go",
+    "Poliz address", "Poliz label", "Poliz call"
 };
 
 ostream& operator << (ostream& os, const Lex&l)
@@ -161,6 +154,7 @@ Ident::Ident()
 {
     declare = -1;
     type_of_value = 0;
+    parametrs_number = 0;
 }
 
 char *Ident::get_name()
@@ -357,6 +351,7 @@ Lex Scanner::get_lex()
                         {
                             in_script_tag = 0;
                             clear();
+                            return Lex(LEX_FIN_PART);
                         }
                         else
                         {

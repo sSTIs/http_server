@@ -1,8 +1,10 @@
 #! /Users/user/Documents/CMC/prac4/server/server/mjs
+<SCRIPT LANGUAGE="mjs" RUNAT="server">
+	write("Content-type: text/html\r\n\r\n");
+</SCRIPT>
 <html><body>
 text before script</br>
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
-{
 	var x = 2;
 	var y = true;
 	var z = false;
@@ -19,10 +21,9 @@ text before script</br>
 		write(" This is true\n");
 	else
 		write(" This is false\n");
-	write(x, y,z, " ",qwe);
-	/*write(Environment["QUERY_STRING"]);*/
+	write(x, y,z, " ",qwe, "\r\n");
+	write(Environment["QUERY_STRING"]);
 	write("\n");
-}
 </SCRIPT>
 text after script</br>
 </body></html>

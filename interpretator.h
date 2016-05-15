@@ -35,11 +35,14 @@ class Parser
     Lex curr_lex;
     type_of_lex curr_lex_type;
     Scanner scanner;
+    int in_cycle; // deep of cycle
+    Stack <int, 100> cycle_begin;
     
     //recursive descent
     void Program();
     void Program1();
     void Command();
+    void Cycle();
     void Declaration();
     void Expression();
     void Expression1();
@@ -59,10 +62,9 @@ class Parser
     
 public:
     int area_visibility;
-    Stack<int,100> prev_area_visibility;
     Poliz program_poliz;
     Parser(const char *program);
-    void analyze();
+    bool analyze();// 1 if not end 0 if EOF
 };
 //! types conversion
 //!============================================================================
@@ -74,7 +76,11 @@ string toString(Lex lexem);
 class Executer
 {
     Lex curr_lex;
+    int area_visibility;
+    Stack <Lex, 500> return_address;
+    int index;
 public:
+    Executer();
     void execute( Poliz& poliz);
 };
 

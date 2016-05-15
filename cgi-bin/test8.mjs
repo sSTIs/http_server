@@ -2,9 +2,10 @@
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
 	var x = 3;
-	var y = true;
-	var z = "asd";
-	x = -(x--);
-	write(x);
+	write("first ", x);
+}
+</SCRIPT>text<SCRIPT LANGUAGE="mjs" RUNAT="server">
+{
+	write(" second ", x, "\n");
 }
 </SCRIPT>
