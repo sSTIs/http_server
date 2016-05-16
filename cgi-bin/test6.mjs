@@ -1,28 +1,15 @@
 #! /Users/user/Documents/CMC/prac4/server/server/mjs
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
+	/*expressions*/
 	var x =3;
 	write(x,"\n");
 	x = 4+10%3;
-	x = x + 1;
-	write(x);
+	x = (x + 1) * (3+5*2);
+	write(x, "\n");
 	write(x++, "\n");
-	write(x);
-	/*var x = "asd";
-	var y = "qwe";
-	var z = x+y;
-	var w = 5;
-	var q = (3+2+5+7) * w++/5%3;
-	write(z, "\n", q, "\n");*/
-	/*var x = 3;
-	var y = ++x;
-	write("x = ", x, " y = ",y, "\n");
-	function asd(q, qw)
-	{
-		var x = 2;
-		var y = 0;
-	}
-	write(x);*/
-	write(" qwe\n");
+	write(x, "\n");
+	x = x + 1 && x + 1 || ++x;
+	write(x, "\n");
 }
 </SCRIPT>

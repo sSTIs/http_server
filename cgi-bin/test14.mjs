@@ -1,12 +1,12 @@
 #! /Users/user/Documents/CMC/prac4/server/server/mjs
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
-	/*parts*/
+	/*semantic*/
+	function x(x)
+	{
+		var x = 3;
+	}
 	var x = 3;
-	write("first ", x);
-}
-</SCRIPT>text<SCRIPT LANGUAGE="mjs" RUNAT="server">
-{
-	write(" second ", x, "\n");
+	write(x(2));
 }
 </SCRIPT>

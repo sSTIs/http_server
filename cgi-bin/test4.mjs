@@ -1,6 +1,7 @@
 #! /Users/user/Documents/CMC/prac4/server/server/mjs
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
+	/*while do break continue*/
 	var i = 1, j = 1;
 	var k;
 	while ( i < 10)

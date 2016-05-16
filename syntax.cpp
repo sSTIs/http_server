@@ -288,6 +288,7 @@ void Parser::Command()
         }
         program_poliz.put_lex(Lex(LEX_FUNC));
         Command();
+        program_poliz.put_lex(Lex(LEX_UNDEF));
         program_poliz.put_lex(Lex(LEX_RETURN));
         program_poliz.change_free(); // free to main place
         undeclare();

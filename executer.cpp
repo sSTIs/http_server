@@ -161,9 +161,9 @@ string Executer::toString(Lex lexem)
             return string("undefined");
             break;
         case 1:
-            //itoa(lexem.get_ivalue(), temp_str, 10);
-            //return string(temp_str);
-            return string("");
+            sprintf(temp_str, "%d", lexem.get_ivalue());
+            return string(temp_str);
+            //return string("");
             break;
         case 2:
             if (lexem.get_bvalue())

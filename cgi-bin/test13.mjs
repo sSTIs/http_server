@@ -1,23 +1,15 @@
 #! /Users/user/Documents/CMC/prac4/server/server/mjs
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
-	/*functions2*/
-	function b()
-	{
-		write("b");
-	}
-	function a()
+	/*syntax semantic errors*/
+	for (;)
+		write(a);
+	do
 	{
 		write("a");
-		b();
-		b();
 	}
+	a = 3;
+	var x, y = y
 
-	a();
-	b();
-	a();
-	b();
-	b();
-	a();
 }
 </SCRIPT>

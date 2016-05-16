@@ -1,5 +1,6 @@
 #! /Users/user/Documents/CMC/prac4/server/server/mjs
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
+	/*test for server with env*/
 	write("Content-type: text/html\r\n\r\n");
 </SCRIPT>
 <html><body>

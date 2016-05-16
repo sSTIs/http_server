@@ -1,6 +1,7 @@
 #! /Users/user/Documents/CMC/prac4/server/server/mjs
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
+	/*while do*/
 	var x = 1;
 	while (!(x == 10))
 	{
