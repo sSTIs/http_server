@@ -44,7 +44,7 @@ void Parser::declare(int num_in_TID)
         throw "Semantic error: " + string(TID[num_in_TID].get_name()) +" declared twice";
     else
     {
-        (TID[num_in_TID].prev_declare) = TID[num_in_TID].declare;
+        TID[num_in_TID].prev_declare = TID[num_in_TID].declare;
         TID[num_in_TID].declare = area_visibility;
     }
 }
@@ -236,10 +236,10 @@ void Parser::Command()
         {
             get_lex();
             Declaration();
+            program_poliz.put_lex(Lex(LEX_SEMICOLON));// to clear stack
         } while (curr_lex_type == LEX_COMMA);
         if (curr_lex_type == LEX_SEMICOLON)
         {
-            program_poliz.put_lex(Lex(LEX_SEMICOLON));
             get_lex();
         }
         else throw curr_lex;
@@ -288,7 +288,6 @@ void Parser::Command()
         }
         program_poliz.put_lex(Lex(LEX_FUNC));
         Command();
-        program_poliz.put_lex(Lex(LEX_UNDEF));
         program_poliz.put_lex(Lex(LEX_RETURN));
         program_poliz.change_free(); // free to main place
         undeclare();
@@ -331,7 +330,7 @@ void Parser::Declaration()
         {
             get_lex();
             Expression();
-            program_poliz.put_lex(Lex(LEX_ASSIGN));
+            program_poliz.put_lex(Lex(LEX_VAR));
         }
     }
     else throw curr_lex;

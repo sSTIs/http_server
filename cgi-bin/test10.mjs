@@ -7,6 +7,6 @@
 			return 1;
 		return n * fact(n-1);
 	}
-	write(fact(5));
+	write(fact(5), "\n");
 }
 </SCRIPT>

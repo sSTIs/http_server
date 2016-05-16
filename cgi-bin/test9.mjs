@@ -7,8 +7,9 @@
 	}
 	function x(y, z)
 	{
+		write(x2(4), " ");
 		return x2(y)+z;
 	}
-	write(x(2,3) + 3, "\n");
+	write(x(2,3), "\n");
 }
 </SCRIPT>

@@ -66,12 +66,6 @@ public:
     Parser(const char *program);
     bool analyze();// 1 if not end 0 if EOF
 };
-//! types conversion
-//!============================================================================
-void from_adreess_to_value(Lex& lexem);
-bool toBool(Lex lexem);
-int toInt(Lex lexem);
-string toString(Lex lexem);
 
 class Executer
 {
@@ -81,7 +75,14 @@ class Executer
     int index;
 public:
     Executer();
-    void execute( Poliz& poliz);
+    void execute(Poliz& poliz);
+    
+    //types conversation
+    //get LEX_NUM ... LEX_STR from LEX_ADDRESS
+    void from_adreess_to_value(Lex& lexem);
+    bool toBool(Lex lexem);
+    int toInt(Lex lexem);
+    string toString(Lex lexem);
 };
 
 class Interpretator

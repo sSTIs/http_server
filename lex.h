@@ -140,7 +140,9 @@ public:
     ~Table_ident();
     Ident& operator[](int index);
     int put(char *buf);
+    int put(char *buf, int area_visibility);
     int get_top() const;
+    void undeclare(int area_visibility);
 };
 
 class Scanner //Scan file and make table of idents, lexems

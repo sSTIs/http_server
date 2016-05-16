@@ -201,9 +201,27 @@ int Table_ident::put(char *buf)
     return top-1;
 }
 
+int Table_ident::put(char *buf, int area_visibility)
+{
+    for (int j = 1; j < top; j++)
+        if (idents[j].declare == area_visibility && !strcmp(buf, idents[j].get_name()))
+            return j;
+    idents[top].put_name(buf);
+    idents[top].declare = area_visibility;
+    ++top;
+    return top-1;
+}
+
 int Table_ident::get_top() const
 {
     return top;
+}
+
+void Table_ident::undeclare(int area_visibility)
+{
+    for (int i = 1; i < top; ++i)
+        if ((*this)[i].declare == area_visibility)
+            (*this)[i].type_of_value = 0;
 }
 
 //! class Scanner

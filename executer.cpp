@@ -73,13 +73,17 @@ Poliz::Poliz(int max_size)
 
 extern Table_ident TID;
 
-//! types conversion
-//!======================================================================================
-void from_adreess_to_value(Lex& lexem)
+//! Executer types conversion
+//!=====================================================================================
+void Executer::from_adreess_to_value(Lex& lexem)
 {
     if (lexem.get_type() == POLIZ_ADDRESS)
     {
         int index_in_TID = lexem.get_ivalue();
+        if (area_visibility != 0)
+        {
+            index_in_TID = TID.put(TID[index_in_TID].get_name(), area_visibility);
+        }
         switch (TID[index_in_TID].type_of_value)
         {
             case 0:
@@ -98,7 +102,7 @@ void from_adreess_to_value(Lex& lexem)
     }
 }
 
-bool toBool(Lex lexem)
+bool Executer::toBool(Lex lexem)
 {
     from_adreess_to_value(lexem);
     switch (lexem.get_type_of_value())
@@ -122,7 +126,7 @@ bool toBool(Lex lexem)
     }
 }
 
-int toInt(Lex lexem)
+int Executer::toInt(Lex lexem)
 {
     from_adreess_to_value(lexem);
     int num_from_str;
@@ -147,7 +151,7 @@ int toInt(Lex lexem)
     }
 }
 
-string toString(Lex lexem)
+string Executer::toString(Lex lexem)
 {
     from_adreess_to_value(lexem);
     char temp_str[100];
@@ -241,26 +245,28 @@ void Executer::execute(Poliz& poliz)
                     break;
                  }
                 break;
+            case LEX_VAR:
             case LEX_ASSIGN:
                 from = args.pop();
                 to = args.pop();
                 index_in_TID = to.get_ivalue();
+                index_in_TID = TID.put(TID[index_in_TID].get_name(), area_visibility);
                 from_adreess_to_value(from);
                 (TID[index_in_TID]).type_of_value = from.get_type_of_value();
                 switch (from.get_type_of_value())
                 {
                 case 1:
-                        (TID[index_in_TID]).ivalue = from.get_ivalue();
-                        args.push(Lex(LEX_NUM, (TID[index_in_TID]).ivalue));
-                        break;
+                    (TID[index_in_TID]).ivalue = from.get_ivalue();
+                    args.push(Lex(LEX_NUM, (TID[index_in_TID]).ivalue));
+                    break;
                 case 2:
-                        (TID[index_in_TID]).bvalue = from.get_bvalue();
-                        args.push(Lex(LEX_BOOL, (TID[index_in_TID]).bvalue));
-                        break;
+                    (TID[index_in_TID]).bvalue = from.get_bvalue();
+                    args.push(Lex(LEX_BOOL, (TID[index_in_TID]).bvalue));
+                    break;
                 case 3:
-                        (TID[index_in_TID]).svalue = from.get_svalue();
-                        args.push(Lex(LEX_STR, (TID[index_in_TID]).svalue));
-                        break;
+                    (TID[index_in_TID]).svalue = from.get_svalue();
+                    args.push(Lex(LEX_STR, (TID[index_in_TID]).svalue));
+                    break;
                 }
                 break;
             case LEX_ENV:
@@ -279,7 +285,10 @@ void Executer::execute(Poliz& poliz)
                     from = args.pop();
                     to = poliz[index + parametrs_number - 1 - i];
                     index_in_TID = to.get_ivalue();
+                    index_in_TID = TID.put(TID[index_in_TID].get_name(), area_visibility);
+                    --area_visibility;
                     from_adreess_to_value(from);
+                    ++area_visibility;
                     (TID[index_in_TID]).type_of_value = from.get_type_of_value();
                     switch (from.get_type_of_value())
                     {
@@ -300,6 +309,7 @@ void Executer::execute(Poliz& poliz)
                 index = return_address.pop().get_ivalue() - 1;
                 if (area_visibility == 1)
                     poliz.change_free();
+                TID.undeclare(area_visibility);
                 --area_visibility;
                 break;
             case LEX_ADD:
@@ -307,7 +317,8 @@ void Executer::execute(Poliz& poliz)
                 from_adreess_to_value(op2);
                 op1 = args.pop();
                 from_adreess_to_value(op1);
-                switch (op1.get_type_of_value()) {
+                switch (op1.get_type_of_value())
+                {
                     case 1:
                         args.push(Lex(LEX_NUM, toInt(op1)+toInt(op2)));
                         break;
@@ -324,7 +335,8 @@ void Executer::execute(Poliz& poliz)
                 from_adreess_to_value(op2);
                 op1 = args.pop();
                 from_adreess_to_value(op1);
-                switch (op1.get_type_of_value()) {
+                switch (op1.get_type_of_value())
+                {
                     case 1:
                         args.push(Lex(LEX_NUM, toInt(op1)-toInt(op2)));
                         break;
@@ -383,19 +395,23 @@ void Executer::execute(Poliz& poliz)
                 break;
             case LEX_INC: // i++ only ++i as i = i+1;
                 arg = args.pop();
-                if ((TID[arg.get_ivalue()]).type_of_value == 1)
+                index_in_TID = arg.get_ivalue();
+                index_in_TID = TID.put(TID[index_in_TID].get_name(), area_visibility);
+                if ((TID[index_in_TID]).type_of_value == 1)
                 {
-                    args.push(Lex(LEX_NUM, (TID[arg.get_ivalue()]).ivalue));
-                    (TID[arg.get_ivalue()]).ivalue += 1;
+                    args.push(Lex(LEX_NUM, (TID[index_in_TID]).ivalue));
+                    (TID[index_in_TID]).ivalue += 1;
                 }
                 else throw string("Execute: wrond operand i++");
                 break;
             case LEX_DEC: // i-- only
                 arg = args.pop();
-                if ((TID[arg.get_ivalue()]).type_of_value == 1)
+                index_in_TID = arg.get_ivalue();
+                index_in_TID = TID.put(TID[index_in_TID].get_name(), area_visibility);
+                if ((TID[index_in_TID]).type_of_value == 1)
                 {
-                    args.push(Lex(LEX_NUM, (TID[arg.get_ivalue()]).ivalue));
-                    (TID[arg.get_ivalue()]).ivalue -= 1;
+                    args.push(Lex(LEX_NUM, (TID[index_in_TID]).ivalue));
+                    (TID[index_in_TID]).ivalue -= 1;
                 }
                 else throw string("Execute: wrond operand i--");
                 break;
