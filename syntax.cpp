@@ -453,7 +453,7 @@ void Parser::Cycle()
 void Parser::Expression()
 {
     Expression1();
-    while (curr_lex_type == LEX_ASSIGN)
+    if (curr_lex_type == LEX_ASSIGN)
     {
         //stack_type.push(curr_lex_type);
         if ((program_poliz[program_poliz.get_free() - 1]).get_type() != POLIZ_ADDRESS)
