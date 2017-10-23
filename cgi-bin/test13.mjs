@@ -2,14 +2,14 @@
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
 	/*syntax semantic errors*/
-	for (;)
-		write(a);
+	for (;;)
+		write("a");
 	do
 	{
 		write("a");
-	}
-	a = 3;
-	var x, y = y
+	}while (true);
+	var a = 3;
+	var x, y = y;
 
 }
 </SCRIPT>

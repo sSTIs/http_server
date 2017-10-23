@@ -4,7 +4,7 @@
 	/*for*/
 	var x = 3;
 	var sum = 0;
-	for (x = 1;x < 5; x++)
+	for (;; x++)
 		sum = sum + x;
 	write(sum, "\n");
 }

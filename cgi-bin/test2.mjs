@@ -2,8 +2,8 @@
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
 	/*comments test and semantic*/
-	x=3;/*asd*/
-	y=2;/****/
-	z/**/y
+	var x=3;/*asd*/
+	var y=2;/****/
+	var z/**/y
 }
 </SCRIPT>

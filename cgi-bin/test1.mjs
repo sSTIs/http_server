@@ -6,7 +6,8 @@
 <html><body>
 text before script</br>
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
-	var x = 2;
+	write("<h1>qwe</h1>");
+	/*var x = 2;
 	var y = true;
 	var z = false;
 	var qwe = "str";
@@ -22,9 +23,9 @@ text before script</br>
 		write(" This is true\n");
 	else
 		write(" This is false\n");
-	write(x, y,z, " ",qwe, "\r\n");
+	write(x," ", y," ",z, " ",qwe, " ",asd,"\r\n");
 	write(Environment["QUERY_STRING"]);
-	write("\n");
+	write("\n");*/
 </SCRIPT>
 text after script</br>
 </body></html>

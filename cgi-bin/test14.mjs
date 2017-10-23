@@ -2,11 +2,12 @@
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
 	/*semantic*/
-	function x(x)
+	var x;
+	function x()
 	{
-		var x = 3;
+		var y = 3;
 	}
-	var x = 3;
-	write(x(2));
+	var q = 3;
+	write(x());
 }
 </SCRIPT>

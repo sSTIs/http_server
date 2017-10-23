@@ -2,6 +2,6 @@
 <SCRIPT LANGUAGE="mjs" RUNAT="server">
 {
 	/*test*/
-
+	
 }
 </SCRIPT>
