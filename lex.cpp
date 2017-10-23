@@ -17,7 +17,7 @@ void Stack <T, max_size >::push(T i) {
     if ( !is_full() )
     {
         buf[top] = i;
-        top++;
+        ++top;
     }
     else throw string("Stack_is_full");
 }
